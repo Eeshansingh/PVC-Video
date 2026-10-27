@@ -1,0 +1,385 @@
+{
+ "title": "Major Somnath Sharma: the first Param Vir Chakra",
+ "format": "16:9",
+ "seconds": 297.7,
+ "shots": [
+  {
+   "time": "0.0-4.7",
+   "graphic": "Title card: MAJOR SOMNATH SHARMA / The first Param Vir Chakra / 1923 \u2013 1947",
+   "asset": {
+    "kind": "code"
+   }
+  },
+  {
+   "time": "4.7-12.2",
+   "graphic": "p1_01: Little Som tells his father he wants to join the army",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_01.jpg"
+   }
+  },
+  {
+   "time": "13.1-20.6",
+   "graphic": "p1_02: Father: study for the I.C.S.; Som: the army",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_02.jpg"
+   }
+  },
+  {
+   "time": "21.5-29.0",
+   "graphic": "p1_03: Waiting to meet Maj Gen Bruce Hey, Lucknow",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_03.jpg"
+   }
+  },
+  {
+   "time": "29.9-35.5",
+   "graphic": "p1_04: Inducted into the military college at ten",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_04.jpg"
+   }
+  },
+  {
+   "time": "36.4-42.0",
+   "graphic": "p1_05: Commissioned from I.M.A. in 1942, aged 19",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_05.jpg"
+   }
+  },
+  {
+   "time": "42.0-45.6",
+   "graphic": "Chapter card: BURMA / World War II",
+   "asset": {
+    "kind": "code"
+   }
+  },
+  {
+   "time": "45.6-48.4",
+   "graphic": "p1_06: Burma campaign: an explosion, a man down",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_06.jpg"
+   }
+  },
+  {
+   "time": "49.3-54.1",
+   "graphic": "p1_07: Somnath refuses to leave Bahadur behind",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p1_07.jpg"
+   }
+  },
+  {
+   "time": "55.7-63.2",
+   "graphic": "p2_01: Ordered to drop the wounded man; he refuses",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_01.jpg"
+   }
+  },
+  {
+   "time": "64.1-67.1",
+   "graphic": "p2_02: Somnath runs back to camp carrying him",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_02.jpg"
+   }
+  },
+  {
+   "time": "68.0-73.4",
+   "graphic": "p2_03: Bahadur survives",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_03.jpg"
+   }
+  },
+  {
+   "time": "73.4-77.0",
+   "graphic": "Chapter card: OCTOBER 1947 / A call to Kashmir",
+   "asset": {
+    "kind": "code"
+   }
+  },
+  {
+   "time": "77.0-83.0",
+   "graphic": "p2_04: 31 Oct 1947: arm in plaster, going anyway",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_04.jpg"
+   }
+  },
+  {
+   "time": "83.9-90.3",
+   "graphic": "p2_05: His mother worries",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_05.jpg"
+   }
+  },
+  {
+   "time": "91.2-98.7",
+   "graphic": "p2_06: \"The bullet with my name on it...\"",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_06.jpg"
+   }
+  },
+  {
+   "time": "99.6-106.6",
+   "graphic": "p2_07: 4 Kumaon, Delta Company commander",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_07.jpg"
+   }
+  },
+  {
+   "time": "107.5-115.0",
+   "graphic": "p2_08: Raiders invade Kashmir; the Maharaja signs the accession",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_08.jpg"
+   }
+  },
+  {
+   "time": "115.9-123.4",
+   "graphic": "p2_09: 4 Kumaon ordered to the Srinagar airstrip",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_09.jpg"
+   }
+  },
+  {
+   "time": "124.3-131.3",
+   "graphic": "p2_10: \"My men know the way I function. I must go.\"",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p2_10.jpg"
+   }
+  },
+  {
+   "time": "131.3-134.9",
+   "graphic": "Chapter card: SRINAGAR / 31 October 1947",
+   "asset": {
+    "kind": "code"
+   }
+  },
+  {
+   "time": "134.9-142.4",
+   "graphic": "p3_01: Arrival at the Srinagar airstrip",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_01.jpg"
+   }
+  },
+  {
+   "time": "143.3-150.8",
+   "graphic": "p3_02: 2 Nov: reports of raiders in the hills",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_02.jpg"
+   }
+  },
+  {
+   "time": "150.8-154.4",
+   "graphic": "Chapter card: BADGAM / 3 November 1947",
+   "asset": {
+    "kind": "code"
+   }
+  },
+  {
+   "time": "154.4-161.4",
+   "graphic": "p3_03: 3 Nov: companies sent to survey Badgam",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_03.jpg"
+   }
+  },
+  {
+   "time": "162.3-168.1",
+   "graphic": "p3_04: Only refugees in the nala, it seems",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_04.jpg"
+   }
+  },
+  {
+   "time": "169.0-174.6",
+   "graphic": "p3_05: 14:30: the \"refugees\" start leaving",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_05.jpg"
+   }
+  },
+  {
+   "time": "175.5-177.9",
+   "graphic": "p3_06: Ambush",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_06.jpg"
+   }
+  },
+  {
+   "time": "178.8-184.6",
+   "graphic": "p3_07: 70 men against about 1,000 raiders",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_07.jpg"
+   }
+  },
+  {
+   "time": "185.5-193.0",
+   "graphic": "p3_08: Surrounded on three sides; holding",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_08.jpg"
+   }
+  },
+  {
+   "time": "193.9-198.5",
+   "graphic": "p3_09: Chalk markings for the air force",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_09.jpg"
+   }
+  },
+  {
+   "time": "199.4-203.4",
+   "graphic": "p3_10: Spitfires arrive",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p3_10.jpg"
+   }
+  },
+  {
+   "time": "205.0-209.6",
+   "graphic": "p4_01: Keep fighting",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_01.jpg"
+   }
+  },
+  {
+   "time": "210.5-217.5",
+   "graphic": "p4_02: \"We'll fight to the last man and last round.\"",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_02.jpg"
+   }
+  },
+  {
+   "time": "218.4-225.4",
+   "graphic": "p4_03: He mans a machine gun himself",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_03.jpg"
+   }
+  },
+  {
+   "time": "226.3-232.9",
+   "graphic": "p4_04: A shell lands on the ammunition",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_04.jpg"
+   }
+  },
+  {
+   "time": "233.8-236.0",
+   "graphic": "p4_05: The blast",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_05.jpg"
+   }
+  },
+  {
+   "time": "236.9-241.7",
+   "graphic": "p4_06: He lies among the dead, aged 24",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_06.jpg"
+   }
+  },
+  {
+   "time": "242.6-246.8",
+   "graphic": "p4_07: Sepoy Dewan Singh charges: \"For Somi Sa'ab!\"",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p4_07.jpg"
+   }
+  },
+  {
+   "time": "248.4-253.0",
+   "graphic": "p5_01: The men fight on",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_01.jpg"
+   }
+  },
+  {
+   "time": "253.9-257.9",
+   "graphic": "p5_02: Dewan Singh falls",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_02.jpg"
+   }
+  },
+  {
+   "time": "258.8-261.8",
+   "graphic": "p5_03: The intruders retreat",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_03.jpg"
+   }
+  },
+  {
+   "time": "262.7-266.3",
+   "graphic": "p5_04: Enough time won for reinforcements",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_04.jpg"
+   }
+  },
+  {
+   "time": "267.2-272.8",
+   "graphic": "p5_05: The cost: 20 dead, 26 wounded",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_05.jpg"
+   }
+  },
+  {
+   "time": "273.7-278.1",
+   "graphic": "p5_06: The enemy withdraws from the airfield",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_06.jpg"
+   }
+  },
+  {
+   "time": "279.0-283.6",
+   "graphic": "p5_07: \"The airfield is now secure.\"",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_07.jpg"
+   }
+  },
+  {
+   "time": "284.5-292.0",
+   "graphic": "p5_08: Param Vir Chakra, the first",
+   "asset": {
+    "kind": "user_photo",
+    "path": "panels/hd/p5_08.jpg"
+   }
+  },
+  {
+   "time": "292.0-297.7",
+   "graphic": "End card: PARAM VIR CHAKRA / The first. 1947. / Major Somnath Sharma, 4 Kumaon",
+   "asset": {
+    "kind": "code"
+   }
+  }
+ ]
+}

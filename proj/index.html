@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Stardos+Stencil:wght@400;700&display=swap" />
+<script src="vendor/gsap.min.js"></script>
+<script src="studio.js"></script>
+<script src="beats.js"></script>
+<style>
+  /* style: comic-dossier (see ../STYLE.md). Every colour comes from these tokens. */
+  :root { --ground: #EFE6D2; --ink: #1C1A17; --ink-soft: #5B554B; --veil: rgba(239, 230, 210, 0.86); --accent: #D9772B; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); }
+  #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: var(--ground); color: var(--ink); }
+  #world { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+  #world img { position: absolute; top: 0; display: block; }
+  .veil { position: absolute; background: var(--veil); }
+  .card { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; background: var(--ground);
+    will-change: transform; overflow: hidden; }
+  .card .rule { position: absolute; left: 144px; height: 10px; width: 220px; background: var(--accent); transform-origin: 0 50%; }
+  .mask { position: absolute; left: 0; padding-left: 144px; width: 1420px; overflow: hidden; white-space: nowrap; }
+  .mask > span { display: block; will-change: transform; }
+  .big { font-family: 'Stardos Stencil', serif; font-weight: 700; letter-spacing: 0.01em; line-height: 1.0; }
+  .small { font-family: 'Special Elite', monospace; color: var(--ink); }
+  .tiny { font-family: 'Special Elite', monospace; color: var(--ink-soft); }
+  .edge { position: absolute; left: 144px; bottom: 88px; font-family: 'Special Elite', monospace; font-size: 26px;
+    color: var(--ink-soft); letter-spacing: 0.12em; }
+  .portrait { position: absolute; left: 1440px; top: 0; width: 480px; height: 1080px; overflow: hidden;
+    border-left: 8px solid var(--ink); }
+  .portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; transform-origin: 50% 35%; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="297.7" data-width="1920" data-height="1080">
+  <div id="world"></div>
+</div>
+<script>
+  const S = STUDIO, B = window.BEATS, root = S.root, world = document.getElementById('world');
+  root.dataset.duration = B.D;
+  const el = (tag, cls, parent, css, html) => { const d = document.createElement(tag); if (cls) d.className = cls;
+    Object.assign(d.style, css || {}); if (html != null) d.innerHTML = html; (parent || root).appendChild(d); return d; };
+
+  // the world: every spread laid side by side, in 4x page pixels
+  B.spreads.forEach(s => { const i = el('img', '', world, { left: s.x + 'px', width: s.w + 'px', height: s.h + 'px' });
+    i.src = s.src; i.decoding = 'sync'; });
+  // the veil: four sheets of paper that cover everything except the panel being read
+  const veil = [0, 1, 2, 3].map(() => el('div', 'veil', world));
+  const FAR = 40000;
+  function setVeil([x0, y0, x1, y1]) {
+    const r = [[x0 - FAR, y0 - FAR, x1 + FAR, y0], [x0 - FAR, y1, x1 + FAR, y1 + FAR],
+               [x0 - FAR, y0, x0, y1], [x1, y0, x1 + FAR, y1]];
+    r.forEach((q, k) => Object.assign(veil[k].style, { left: q[0] + 'px', top: q[1] + 'px',
+      width: (q[2] - q[0]) + 'px', height: (q[3] - q[1]) + 'px' }));
+  }
+
+  // cards: title, chapters, end. Big line in stencil, small lines in typewriter, one saffron rule
+  const cards = B.cards.map(c => {
+    const d = el('div', 'card');
+    const [big, small, tiny] = c.lines;
+    const bigLines = c.kind === 'title' ? ['MAJOR', 'SOMNATH SHARMA'] : [big];
+    const fs = c.kind === 'chapter' ? 170 : 112;
+    const blockH = bigLines.length * fs * 1.04;
+    const top0 = 540 - (blockH + 40 + 64 + (tiny ? 54 : 0)) / 2;
+    const rule = el('div', 'rule', d, { top: (top0 - 56) + 'px' });
+    const lines = [];
+    bigLines.forEach((t, i) => lines.push(el('div', 'mask big', d, { top: (top0 + i * fs * 1.04) + 'px',
+      fontSize: fs + 'px', height: (fs * 1.04) + 'px' }, `<span>${t}</span>`)));
+    lines.push(el('div', 'mask small', d, { top: (top0 + blockH + 28) + 'px', fontSize: '50px', height: '64px' },
+      `<span>${small}</span>`));
+    if (tiny) lines.push(el('div', 'mask tiny', d, { top: (top0 + blockH + 28 + 72) + 'px', fontSize: '34px',
+      height: '48px' }, `<span>${tiny}</span>`));
+    const edge = c.kind === 'title' ? el('div', 'edge', d, {}, 'A STORY IN 42 PANELS') : null;
+    // title and end cards carry his portrait from the last panel, on the right, clear of the type
+    let photo = null;
+    if (c.kind !== 'chapter') { const f = el('div', 'portrait', d); photo = el('img', '', f); photo.src = 'media/portrait.jpg'; }
+    return { c, d, rule, spans: lines.map(l => l.firstChild), edge, photo };
+  });
+
+  // the camera: frame a panel inside the safe area (120 px sides, 80 px top and bottom)
+  const FW = 1680, FH = 920, PUSH = 0.05;
+  const view = (b, m) => ({ cx: (b[0] + b[2]) / 2, cy: (b[1] + b[3]) / 2,
+    ls: Math.log(Math.min(FW / (b[2] - b[0]), FH / (b[3] - b[1])) * m) });
+  const P = B.panels;
+  function camera(t) {
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i], n = P[i + 1];
+      if (t < p.arrive) return { v: view(p.box, 1), box: p.box };
+      if (t < p.leave) return { v: view(p.box, 1 + PUSH * S.seg(t, p.arrive, p.leave - p.arrive, 'sine.inOut')), box: p.box };
+      if (!n) return { v: view(p.box, 1 + PUSH), box: p.box };
+      if (p.move > 0 && t < p.leave + p.move) {
+        const e = S.seg(t, p.leave, p.move, 'power3.inOut');
+        const a = view(p.box, 1 + PUSH), b = view(n.box, 1);
+        const dip = n.page !== p.page ? 0.6 * Math.sin(Math.PI * e) : 0;   // pull back while crossing to the next spread
+        let box = p.box.map((x, k) => S.mix(x, n.box[k], e));
+        if (n.page !== p.page) {   // crossing spreads: close the reading window, then open it on the new panel
+          const b = e < 0.5 ? p.box : n.box, k = Math.sin(Math.PI * e), cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+          box = [S.mix(b[0], cx, k), S.mix(b[1], cy, k), S.mix(b[2], cx, k), S.mix(b[3], cy, k)];
+        }
+        return { v: { cx: S.mix(a.cx, b.cx, e), cy: S.mix(a.cy, b.cy, e), ls: S.mix(a.ls, b.ls, e) - dip }, box };
+      }
+      if (p.move === 0 && t < n.arrive) {   // a card covers this change: swap once the card is fully in
+        return t < p.leave + B.CARD_IN ? { v: view(p.box, 1 + PUSH), box: p.box } : { v: view(n.box, 1), box: n.box };
+      }
+    }
+  }
+
+  S.play(function render(t) {
+    const { v, box } = camera(t);
+    const s = Math.exp(v.ls);
+    world.style.transform = `translate(${960 - v.cx * s}px, ${540 - v.cy * s}px) scale(${s})`;
+    setVeil(box);
+
+    cards.forEach(({ c, d, rule, spans, edge, photo }) => {
+      const pin = c.in < 0 ? 1 : S.seg(t, c.in, B.CARD_IN, 'power3.inOut');
+      const pout = S.seg(t, c.out, B.CARD_OUT, 'power3.in');
+      const y = pin < 1 ? 1080 * (1 - pin) : -1080 * pout;
+      d.style.display = (pin <= 0 || pout >= 1) ? 'none' : 'block';
+      d.style.transform = `translateY(${y}px)`;
+      const t0 = (c.in < 0 ? 0 : c.in + 0.35);
+      rule.style.transform = `scaleX(${0.08 + 0.92 * S.seg(t, t0, 0.6, 'expo.out')})`;
+      spans.forEach((sp, i) => {
+        const k = S.seg(t, t0 + 0.12 + i * 0.1, 0.65, 'expo.out');
+        // a slow drift while the card holds, so it never sits dead still
+        const drift = -28 * S.seg(t, t0, (c.out > 1e8 ? B.D : c.out) - t0, 'sine.inOut');
+        sp.style.transform = `translate(${drift * (1 + i * 0.25)}px, ${(1 - k) * 110}%)`;
+      });
+      if (photo) photo.style.transform = `scale(${1.12 - 0.12 * S.seg(t, t0, (c.out > 1e8 ? B.D : c.out) - t0, 'power2.out')})`;
+      if (edge) edge.style.opacity = S.seg(t, t0 + 0.8, 0.6, 'power2.out');
+    });
+  }, { loop: false });
+</script>
+</body>
+</html>

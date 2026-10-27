@@ -1,0 +1,7 @@
+proj/stills/
+out/*.mp4
+!out/*-share.mp4
+node_modules/
+__pycache__/
+.env
+panels/detect/
