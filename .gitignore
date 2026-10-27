@@ -5,3 +5,6 @@ node_modules/
 __pycache__/
 .env
 panels/detect/
+out/work-*/
+out/*-contact.jpg
+out/*-pacing.json
