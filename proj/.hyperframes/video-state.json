@@ -473,13 +473,14 @@
   },
   "renders": {
     "latest": {
-      "id": "97ec5b19-ecb0-4f0d-ba0c-73545a2e5c17",
-      "completedAt": 1793126204634,
-      "output": "/home/user/pvc-video/out/somnath-sharma-draft.mp4",
+      "id": "be10398b-cc90-4050-abe8-2b654f88cdd5",
+      "completedAt": 1793127320500,
+      "output": "/home/user/pvc-video/out/somnath-sharma-final.mp4",
       "status": "completed",
-      "revision": "6cf991b1-9efc-42d3-a983-58b62f121093"
+      "revision": "d80816b8-579b-4594-9165-8eb6c3906192"
     },
     "retainedRevisions": [
+      "d80816b8-579b-4594-9165-8eb6c3906192",
       "6cf991b1-9efc-42d3-a983-58b62f121093"
     ]
   },

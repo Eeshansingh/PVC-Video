@@ -25,3 +25,7 @@ Read `BRIEF.md` for the numbers and `STYLE.md` for the look.
 Title → childhood (early 1930s) → BURMA (WWII, saving Bahadur) → OCTOBER 1947 (going to Kashmir with a
 broken arm) → SRINAGAR (31 Oct) → BADGAM (3 Nov: the ambush, the last stand, Dewan Singh) → the airfield
 held → Param Vir Chakra.
+
+## The video
+`out/somnath-sharma-share.mp4`: 1920 x 1080, 30 fps, 4:57.7, silent, 44 MB (H.264, CRF 24).
+The full-quality render (192 MB) is too big for GitHub; `bash build.sh high` makes it again.
