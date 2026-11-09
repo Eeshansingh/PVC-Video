@@ -189,8 +189,9 @@ Visual: the opening village frame at dusk, the music swelling, then the end scre
 ---
 
 ## Counts
-- 86 lines, about 1,480 Hindi words. The estimated runtime at the paces above, with pauses included, is 11:30 to 12:30. The exact time is measured after the voice render, and the beats are retimed to it.
-- Sarvam cost: about 9,000 characters for one full take, so roughly ₹27 per take. Two takes of key lines (5, 59 to 69, 75, 81, 85) add about ₹5.
+- 86 lines, 1,090 Hindi words (5,430 characters). At about 130 words a minute plus roughly 60 s of designed pauses, the estimated runtime is 9:30 to 10:30, not the 12:00 target. The beat times above are therefore about 15% long. The exact time is measured after the voice render, and the beats are retimed to it.
+- To reach 12:00, about 300 more words are needed. The best places are Beat 3 (school years), Beat 4 (the raid on Baramulla) and Beat 8 (more of the fight). That needs your call, because a tighter 10-minute cut may hold retention better.
+- Sarvam cost: about 5,400 characters for one full take, so roughly ₹16 per take. Two takes of key lines (5, 59 to 69, 75, 81, 85) add about ₹4.
 
 ## Before the voice render: facts to confirm
 1. 22, 26 and 27 Oct 1947 dates (lines 22 to 24). These are standard history, but no page in this session confirmed them.
