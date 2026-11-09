@@ -14,3 +14,6 @@ out/.*
 out/preview/
 voice/longform/sil_*.wav
 voice/longform/concat.txt
+film/stills/
+out/*.wav
+voice/longform/score.wav

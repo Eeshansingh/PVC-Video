@@ -1,0 +1,690 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+Devanagari:wght@500;700&family=Noto+Sans+Devanagari:wght@500;700&family=Special+Elite&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" />
+<script src="vendor/gsap.min.js"></script>
+<script src="studio.js"></script>
+<script src="beats.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #F2ECE0; }
+  #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #F2ECE0; }
+  #cv { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+  .pre { position: absolute; left: -9999px; top: 0; font-size: 20px; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="510.9" data-width="1920" data-height="1080">
+  <canvas id="cv" width="1920" height="1080"></canvas>
+  <img id="stamp" src="media/stamp.jpg" style="position:absolute;left:-9999px" alt="" />
+  <div class="pre" aria-hidden="true">
+    <span style="font-family:'Noto Serif Devanagari';font-weight:500">अ</span><span style="font-family:'Noto Serif Devanagari';font-weight:700">अ</span>
+    <span style="font-family:'Noto Sans Devanagari';font-weight:500">अ</span><span style="font-family:'Noto Sans Devanagari';font-weight:700">अ</span>
+    <span style="font-family:'Special Elite'">A</span><span style="font-family:'Cormorant Garamond';font-style:italic">A</span>
+  </div>
+</div>
+<script>
+/*
+ * "पचास गज": Major Somnath Sharma and the Battle of Badgam. About 8.5 min, 1920 x 1080, one canvas drawn from t alone.
+ * Every visual is keyed to the narration: L(n) is when narration line n starts (see ../script/badgam_longform_script_v2.md).
+ * Look: sumi ink on warm paper, one accent (vermilion) that marks D Company, the airfield lifeline and the seal.
+ * Ink strokes boil on twos (15 fps); camera and type move at 30 fps.
+ */
+(function () {
+  'use strict';
+  const S = STUDIO, B = window.BEATS, W = 1920, H = 1080;
+  const PAPER = '#F2ECE0', INK = '#1B1A18', SOFT = '#5A544B', FAINT = 'rgba(27,26,24,0.18)', ACC = '#C2402E';
+  const SERIF = '"Noto Serif Devanagari", serif', SANS = '"Noto Sans Devanagari", sans-serif', TYPE = '"Special Elite", monospace';
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const stampImg = document.getElementById('stamp');
+  const L = n => B.lines[n - 1].s, E = n => B.lines[n - 1].e;
+
+  // ---------- math ----------
+  const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const seg = (t, a, d, e) => S.seg(t, a, d, e || 'power2.inOut');
+  function hash(i) { i = i | 0; i = Math.imul(i ^ (i >>> 16), 0x45d9f3b); i = Math.imul(i ^ (i >>> 16), 0x45d9f3b); i ^= i >>> 16; return (i >>> 0) / 4294967296; }
+  function vn(x, s) { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(hash(i * 7919 + s * 104729), hash((i + 1) * 7919 + s * 104729), u); }
+  let SEED = 0;                                   // boil seed, changes every 2 frames
+
+  // ---------- paper ----------
+  const T = 1024, paper = document.createElement('canvas'); paper.width = paper.height = T;
+  (function () {
+    const p = paper.getContext('2d'), rnd = S.rng(1947);
+    p.fillStyle = PAPER; p.fillRect(0, 0, T, T);
+    const m = 128, mc = document.createElement('canvas'); mc.width = mc.height = m;
+    const mx = mc.getContext('2d'), id = mx.createImageData(m, m);
+    for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) {
+      let n = 0, a = 1, tot = 0;
+      for (let o = 0; o < 3; o++) {
+        const P = [4, 8, 16][o], X = x * P / m, Y = y * P / m, xi = Math.floor(X), yi = Math.floor(Y), fx = X - xi, fy = Y - yi;
+        const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+        const h = (i, j) => hash(((i % P + P) % P) * 92821 + ((j % P + P) % P) * 68917 + o * 1013);
+        n += a * lerp(lerp(h(xi, yi), h(xi + 1, yi), ux), lerp(h(xi, yi + 1), h(xi + 1, yi + 1), ux), uy); tot += a; a *= 0.5;
+      }
+      const v = n / tot - 0.5, k = (y * m + x) * 4;
+      if (v < 0) { id.data[k] = 140; id.data[k + 1] = 112; id.data[k + 2] = 74; id.data[k + 3] = Math.min(255, -v * 170); }
+      else { id.data[k] = 255; id.data[k + 1] = 252; id.data[k + 2] = 244; id.data[k + 3] = Math.min(255, v * 120); }
+    }
+    mx.putImageData(id, 0, 0); p.globalAlpha = 0.26; p.drawImage(mc, 0, 0, T, T); p.globalAlpha = 1;
+    for (let i = 0; i < 2600; i++) {
+      const x = rnd() * T, y = rnd() * T, Ln = 6 + rnd() * (rnd() < 0.1 ? 110 : 34), a = rnd() * Math.PI * 2;
+      p.strokeStyle = rnd() < 0.7 ? `rgba(140,112,74,${0.05 + rnd() * 0.07})` : `rgba(255,253,246,${0.25 + rnd() * 0.3})`;
+      p.lineWidth = 0.5 + rnd();
+      for (const ox of [-T, 0, T]) for (const oy of [-T, 0, T]) { p.beginPath(); p.moveTo(x + ox, y + oy); p.lineTo(x + ox + Math.cos(a) * Ln, y + oy + Math.sin(a) * Ln); p.stroke(); }
+    }
+  })();
+  const paperPat = ctx.createPattern(paper, 'repeat');
+  const grain = document.createElement('canvas'); grain.width = grain.height = 512;
+  (function () {
+    const g = grain.getContext('2d'), d = g.createImageData(512, 512), rnd = S.rng(77);
+    for (let i = 0; i < 512 * 512; i++) { const r = rnd(), k = i * 4; if (r < 0.5) { d.data[k] = 70; d.data[k + 1] = 55; d.data[k + 2] = 38; d.data[k + 3] = (0.5 - r) * 44; } else { d.data[k] = 255; d.data[k + 1] = 251; d.data[k + 2] = 242; d.data[k + 3] = (r - 0.5) * 48; } }
+    g.putImageData(d, 0, 0);
+  })();
+  const grainPat = ctx.createPattern(grain, 'repeat');
+
+  // ---------- brush: a polyline drawn on with pressure, taper and boil ----------
+  const PATHS = new Map();
+  function sample(pts) {   // Catmull-Rom through [x, y, w?] points, every 3 px
+    const key = JSON.stringify(pts); if (PATHS.has(key)) return PATHS.get(key);
+    const n = pts.length, out = [];
+    const get = i => pts[clamp(i, 0, n - 1)];
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = get(i - 1), p1 = get(i), p2 = get(i + 1), p3 = get(i + 2), len = Math.hypot(p2[0] - p1[0], p2[1] - p1[1]), m = Math.max(2, Math.ceil(len / 3));
+      for (let s = 0; s < m; s++) {
+        const u = s / m, u2 = u * u, u3 = u2 * u;
+        const f = c => 0.5 * ((2 * p1[c]) + (-p0[c] + p2[c]) * u + (2 * p0[c] - 5 * p1[c] + 4 * p2[c] - p3[c]) * u2 + (-p0[c] + 3 * p1[c] - 3 * p2[c] + p3[c]) * u3);
+        out.push([f(0), f(1), lerp(p1[2] == null ? 1 : p1[2], p2[2] == null ? 1 : p2[2], u)]);
+      }
+    }
+    out.push([pts[n - 1][0], pts[n - 1][1], pts[n - 1][2] == null ? 1 : pts[n - 1][2]]);
+    PATHS.set(key, out); return out;
+  }
+  // draw a stroke: p = 0..1 drawn, w = base width, col, id seeds the boil
+  function brush(c, pts, p, w, id, col, dry) {
+    if (p <= 0) return;
+    const P = sample(pts), hi = Math.max(1, Math.floor((P.length - 1) * clamp(p, 0, 1)));
+    c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = col || INK;
+    let runW = -1;
+    const pt = i => {
+      const u = i / (P.length - 1), taper = Math.min(1, u / 0.05 + 0.25) * Math.min(1, (1 - u) / 0.12 + 0.2);
+      return [P[i][0] + (vn(i * 0.05 + SEED * 13.1 + id * 3.7, 1) - 0.5) * 2.4, P[i][1] + (vn(i * 0.05 + SEED * 17.7 + id * 5.1, 2) - 0.5) * 2.4,
+        Math.max(0.6, w * P[i][2] * taper * (0.86 + 0.28 * vn(i * 0.04 + id * 1.3, 4)))];
+    };
+    let a = pt(0);
+    c.beginPath(); c.moveTo(a[0], a[1]);
+    for (let i = 1; i <= hi; i++) {
+      const b = pt(i);
+      if (runW < 0 || Math.abs(b[2] - runW) > 0.6) { if (runW >= 0) { c.lineWidth = runW; c.stroke(); c.beginPath(); c.moveTo(a[0], a[1]); } runW = b[2]; }
+      c.lineTo(b[0], b[1]); a = b;
+    }
+    c.lineWidth = runW; c.stroke();
+    if (dry) {   // dry-brush streaks cut out of the stroke
+      c.save(); c.globalCompositeOperation = 'destination-out'; c.strokeStyle = '#000'; c.lineWidth = 1;
+      for (let b = 0; b < 5; b++) {
+        c.beginPath(); let open = false;
+        for (let i = 0; i < hi; i++) {
+          const q = pt(i), nz = vn(i * 0.03 + b * 17 + id, 9);
+          if (nz < 0.35 * dry) { if (!open) { c.moveTo(q[0] + (b - 2) * q[2] * 0.18, q[1] + (b - 2) * q[2] * 0.18); open = true; } else c.lineTo(q[0] + (b - 2) * q[2] * 0.18, q[1] + (b - 2) * q[2] * 0.18); }
+          else open = false;
+        }
+        c.stroke();
+      }
+      c.restore();
+    }
+    if (p < 1) { c.fillStyle = col || INK; c.beginPath(); c.arc(a[0], a[1], Math.max(2.2, runW * 0.6), 0, Math.PI * 2); c.fill(); }
+  }
+  function blob(c, x, y, r, a, k, col) {
+    c.globalAlpha = a; c.fillStyle = col || INK; c.beginPath();
+    const nv = r > 16 ? 40 : 9;
+    for (let j = 0; j <= nv; j++) { const th = j / nv * Math.PI * 2, rr = r * (0.8 + 0.36 * vn((j % nv) * 0.5 + k * 7.7, 8)); j ? c.lineTo(x + Math.cos(th) * rr, y + Math.sin(th) * rr) : c.moveTo(x + Math.cos(th) * rr, y + Math.sin(th) * rr); }
+    c.closePath(); c.fill(); c.globalAlpha = 1;
+  }
+  // an arrow along a path, drawn on with p; head appears at the end
+  function arrow(c, pts, p, w, id, col) {
+    brush(c, pts, p, w, id, col);
+    if (p < 0.85) return;
+    const P = sample(pts), a = P[P.length - 4] || P[0], b = P[P.length - 1], ang = Math.atan2(b[1] - a[1], b[0] - a[0]), k = seg(p, 0.85, 0.15, 'power2.out'), s = (w * 3.6 + 14) * k;
+    brush(c, [[b[0] - Math.cos(ang - 0.5) * s, b[1] - Math.sin(ang - 0.5) * s, 0.6], [b[0], b[1], 1], [b[0] - Math.cos(ang + 0.5) * s, b[1] - Math.sin(ang + 0.5) * s, 0.6]], 1, w, id + 0.5, col);
+  }
+
+  // ---------- type ----------
+  function txt(c, str, x, y, size, opt, p) {
+    if (p !== undefined && p <= 0) return;
+    opt = opt || {};
+    c.save();
+    c.font = `${opt.weight || 700} ${size}px ${opt.font || SERIF}`; c.textAlign = opt.align || 'left'; c.textBaseline = 'alphabetic';
+    const w = c.measureText(str).width, x0 = opt.align === 'center' ? x - w / 2 : opt.align === 'right' ? x - w : x;
+    c.globalAlpha = (opt.alpha == null ? 1 : opt.alpha);
+    if (p !== undefined && p < 1) { c.beginPath(); c.rect(x0 - 10, y - size * 1.4, (w + 20) * p + 8, size * 2.0); c.clip(); }
+    c.fillStyle = opt.col || INK; c.fillText(str, x, y);
+    c.restore();
+    return w;
+  }
+  // a line of text that writes itself in from a time, fades out at `out`
+  function write(c, t, at, str, x, y, size, opt) {
+    opt = opt || {};
+    const dur = opt.dur || (0.35 + 0.03 * str.length), p = seg(t, at, dur, 'sine.inOut');
+    const out = opt.out ? 1 - seg(t, opt.out, 0.5, 'power2.in') : 1;
+    if (p <= 0 || out <= 0) return;
+    txt(c, str, x, y, size, Object.assign({}, opt, { alpha: (opt.alpha == null ? 1 : opt.alpha) * out }), p);
+  }
+  // a date or place card: small accent rule + text
+  function card(c, t, at, big, small, x, y, opt) {
+    opt = opt || {};
+    const out = opt.out ? 1 - seg(t, opt.out, 0.5, 'power2.in') : 1, k = seg(t, at, 0.6, 'expo.out');
+    if (k <= 0 || out <= 0) return;
+    c.save(); c.globalAlpha = out;
+    c.fillStyle = ACC; c.fillRect(x, y - (opt.size || 76) - 34, 120 * k, 7);
+    c.restore();
+    write(c, t, at + 0.1, big, x, y, opt.size || 76, { out: opt.out });
+    if (small) write(c, t, at + 0.5, small, x + 2, y + 56, 36, { weight: 500, col: SOFT, out: opt.out });
+  }
+
+  // ---------- subtitles: the spoken Hindi, line by line, in chunks ----------
+  const SUBS = [];
+  B.lines.forEach(l => {
+    const parts = l.text.replace(/\s+/g, ' ').split(/(?<=[,।?])\s+/), chunks = [];
+    let cur = '';
+    parts.forEach(p => { if ((cur + ' ' + p).trim().length > 44 && cur) { chunks.push(cur.trim()); cur = p; } else cur = (cur + ' ' + p).trim(); });
+    if (cur) chunks.push(cur);
+    const tot = chunks.reduce((a, s) => a + s.length, 0); let t0 = l.s;
+    chunks.forEach(ch => { const d = (l.e - l.s) * ch.length / tot; SUBS.push({ s: t0, e: t0 + d, text: ch }); t0 += d; });
+  });
+  function subtitles(c, t) {
+    const s = SUBS.find(x => t >= x.s - 0.05 && t < x.e + 0.25);
+    if (!s) return;
+    c.save(); c.font = `700 44px ${SANS}`; c.textAlign = 'center';
+    const w = c.measureText(s.text).width, y = 1008;
+    c.globalAlpha = 0.86; c.fillStyle = 'rgba(242,236,224,0.92)'; c.fillRect(960 - w / 2 - 22, y - 46, w + 44, 64);
+    c.globalAlpha = 1; c.fillStyle = INK; c.fillText(s.text, 960, y);
+    c.restore();
+  }
+
+  // ---------- the Kashmir valley map (lon, lat to px) ----------
+  const PLACES = {
+    muz: [73.47, 34.37, 'मुज़फ़्फ़राबाद'], uri: [74.05, 34.08, 'उड़ी'], bar: [74.34, 34.20, 'बारामूला'], pat: [74.56, 34.16, 'पट्टन'],
+    sgr: [74.80, 34.08, 'श्रीनगर'], bad: [74.72, 34.02, 'बडगाम'], air: [74.77, 33.99, 'हवाई अड्डा'], mag: [74.57, 34.10, 'मागाम'], gul: [74.38, 34.05, 'गुलमर्ग']
+  };
+  const JHELUM = [[75.15, 33.73], [75.0, 33.86], [74.88, 33.99], [74.80, 34.08], [74.70, 34.16], [74.62, 34.27], [74.60, 34.33], [74.47, 34.30], [74.34, 34.20], [74.2, 34.16], [74.05, 34.08], [73.85, 34.13], [73.65, 34.24], [73.47, 34.37]];
+  const PIRPANJAL = [[73.9, 33.95], [74.1, 33.86], [74.3, 33.74], [74.55, 33.62], [74.85, 33.52], [75.15, 33.48], [75.45, 33.5]];
+  const HIMALAYA = [[74.2, 34.62], [74.55, 34.55], [74.9, 34.42], [75.15, 34.27], [75.4, 34.08], [75.6, 33.9]];
+  const ROAD = [[73.47, 34.37], [73.65, 34.24], [73.85, 34.13], [74.05, 34.08], [74.2, 34.16], [74.34, 34.20], [74.56, 34.16], [74.70, 34.12], [74.80, 34.08]];
+  function proj(v, lon, lat) { return [960 + (lon - v.lon) * v.s * Math.cos(34 * Math.PI / 180), 540 - (lat - v.lat) * v.s]; }
+  function ridge(c, v, line, p, id) {   // a mountain range as a run of brush peaks
+    const pts = line.map(q => proj(v, q[0], q[1])), P = sample(pts.map(q => [q[0], q[1], 1]));
+    const step = 46, nPk = Math.floor(P.length * 3 / step), shown = Math.floor(nPk * clamp(p, 0, 1));
+    for (let k = 0; k < shown; k++) {
+      const i = Math.min(P.length - 2, Math.floor(k * step / 3)), q = P[i], h = (30 + 46 * hash(k * 13 + id)) * v.s / 1400;
+      const w = (26 + 22 * hash(k * 7 + id)) * v.s / 1400;
+      brush(c, [[q[0] - w, q[1] + h * 0.15, 0.4], [q[0] - w * 0.2, q[1] - h, 1], [q[0] + w * 0.15, q[1] - h * 0.9, 0.9], [q[0] + w, q[1] + h * 0.1, 0.4]], 1, 3.2, id * 100 + k, k % 3 ? SOFT : INK);
+    }
+  }
+  function valley(c, t, v, o) {   // o: {ridges, river, road, places:[ids], at}
+    const at = o.at;
+    ridge(c, v, PIRPANJAL, seg(t, at, 2.0), 3);
+    ridge(c, v, HIMALAYA, seg(t, at + 0.3, 2.0), 7);
+    brush(c, JHELUM.map(q => proj(v, q[0], q[1]).concat(2.6)), seg(t, at + 0.6, 2.2, 'sine.inOut'), 3.4, 11, SOFT);
+    const wl = proj(v, 74.6, 34.36), wk = seg(t, at + 1.2, 1.0);
+    if (wk > 0) { c.save(); c.globalAlpha = 0.5 * wk; c.strokeStyle = SOFT; c.lineWidth = 2.5; c.beginPath(); c.ellipse(wl[0], wl[1], 0.12 * v.s * 0.83, 0.05 * v.s, -0.2, 0, Math.PI * 2); c.stroke(); c.restore(); }
+    if (o.road) { c.save(); c.setLineDash([10, 12]); c.globalAlpha = 0.45 * seg(t, at + 1, 1); c.strokeStyle = INK; c.lineWidth = 2; c.beginPath(); ROAD.forEach((q, i) => { const a = proj(v, q[0], q[1]); i ? c.lineTo(a[0], a[1]) : c.moveTo(a[0], a[1]); }); c.stroke(); c.restore(); }
+    (o.places || []).forEach((id, i) => {
+      const P = PLACES[id], a = proj(v, P[0], P[1]), k = seg(t, at + 1.2 + i * 0.15, 0.5, 'back.out(1.6)');
+      if (k <= 0) return;
+      const acc = id === 'air' && o.airAcc;
+      blob(c, a[0], a[1], (acc ? 11 : 8) * k, 1, i + 3, acc ? ACC : INK);
+      txt(c, P[2], a[0] + 18, a[1] - 14, id === 'sgr' || acc ? 44 : 36, { weight: 700, col: acc ? ACC : INK, alpha: k });
+    });
+  }
+
+  // ---------- the tactical map: airfield, Badgam, the companies ----------
+  const AIR = [1460, 520], BAD = [560, 470], POS = [700, 610];   // D Company's position, south of Badgam
+  function tactical(c, t, at, o) {
+    o = o || {};
+    // high ground: soft hatched ridges to the west
+    for (let k = 0; k < 7; k++) { const x = 140 + k * 90, y = 300 + hash(k) * 520; brush(c, [[x - 40, y + 8, 0.4], [x, y - 30, 1], [x + 40, y + 8, 0.4]], seg(t, at + k * 0.05, 0.6), 3, 300 + k, SOFT); }
+    // runway
+    const rk = seg(t, at + 0.2, 1.0);
+    brush(c, [[AIR[0] - 210, AIR[1] - 26, 1], [AIR[0] + 210, AIR[1] - 26, 1], [AIR[0] + 210, AIR[1] + 26, 1], [AIR[0] - 210, AIR[1] + 26, 1], [AIR[0] - 208, AIR[1] - 24, 1]], rk, 4.5, 310, o.airAcc ? ACC : INK);
+    if (rk > 0.8) { c.save(); c.setLineDash([18, 16]); c.strokeStyle = o.airAcc ? ACC : INK; c.globalAlpha = 0.6; c.lineWidth = 2; c.beginPath(); c.moveTo(AIR[0] - 190, AIR[1]); c.lineTo(AIR[0] + 190, AIR[1]); c.stroke(); c.restore(); }
+    write(c, t, at + 0.8, 'श्रीनगर हवाई अड्डा', AIR[0] - 210, AIR[1] - 52, 34, { weight: 500, col: o.airAcc ? ACC : INK });
+    // Badgam village: little roofs
+    for (let k = 0; k < 9; k++) {
+      const x = BAD[0] - 120 + (k % 5) * 58 + (hash(k * 3) - 0.5) * 20, y = BAD[1] - 50 + Math.floor(k / 5) * 64;
+      brush(c, [[x - 20, y + 16, 0.5], [x - 20, y, 1], [x, y - 16, 1], [x + 20, y, 1], [x + 20, y + 16, 0.5]], seg(t, at + 0.4 + k * 0.06, 0.4), 3, 320 + k);
+    }
+    write(c, t, at + 1.0, 'बडगाम', BAD[0] - 120, BAD[1] - 92, 38, { weight: 700 });
+    // distance bar
+    const dk = seg(t, at + 1.4, 1.0);
+    if (dk > 0) {
+      c.save(); c.globalAlpha = dk; c.strokeStyle = INK; c.lineWidth = 2; c.setLineDash([6, 10]);
+      c.beginPath(); c.moveTo(BAD[0] + 160, BAD[1] + 10); c.lineTo(lerp(BAD[0] + 160, AIR[0] - 230, dk), lerp(BAD[1] + 10, AIR[1], dk)); c.stroke(); c.restore();
+      write(c, t, at + 2.0, '5 कि.मी.', (BAD[0] + AIR[0]) / 2 - 40, (BAD[1] + AIR[1]) / 2 - 18, 34, { weight: 500, col: SOFT });
+    }
+  }
+  // a company block: rectangle with a label, drawn in ink or accent
+  function company(c, x, y, k, label, acc, id) {
+    if (k <= 0) return;
+    c.save(); c.globalAlpha = Math.min(1, k * 1.5);
+    c.fillStyle = acc ? ACC : 'rgba(27,26,24,0.85)'; c.fillRect(x - 34, y - 20, 68, 40);
+    c.font = `700 22px ${SANS}`; c.fillStyle = PAPER; c.textAlign = 'center'; c.fillText(label, x, y + 8);
+    c.restore();
+  }
+  // the raiders: small soft specks; positions from a seed
+  const RAID = [];
+  for (let k = 0; k < 420; k++) RAID.push({ a: Math.PI * (0.5 + 1.0 * hash(k * 13 + 7)), r: 120 + 230 * Math.pow(hash(k * 17 + 2), 0.6), d: hash(k * 29), sz: 2.6 + hash(k * 23) * 2.4 });
+
+  // ---------- small ink props ----------
+  function houses(c, t, at, y0) {   // the cold-open village: roofs, poplars, a far ridge
+    brush(c, [[-40, 360, 0.5], [260, 300, 1], [520, 340, 1], [760, 270, 1.2], [1020, 330, 1], [1300, 280, 1], [1600, 330, 1], [1960, 300, 0.5]], seg(t, at, 2.6, 'sine.inOut'), 4, 500, SOFT, 0.5);
+    for (let k = 0; k < 11; k++) {
+      const x = 160 + k * 160 + (hash(k) - 0.5) * 40, y = y0 + (hash(k * 5) - 0.5) * 40, s = 0.9 + hash(k * 9) * 0.5;
+      const hk = seg(t, at + 0.6 + k * 0.12, 0.7);
+      brush(c, [[x - 46 * s, y + 70 * s, 0.6], [x - 46 * s, y, 1], [x + 46 * s, y, 1], [x + 46 * s, y + 70 * s, 0.6]], hk, 4.2, 510 + k);
+      brush(c, [[x - 66 * s, y + 4 * s, 0.6], [x, y - 52 * s, 1.2], [x + 66 * s, y + 4 * s, 0.6]], seg(t, at + 0.9 + k * 0.12, 0.5), 5.2, 520 + k);
+      if (hk > 0.9) { c.save(); c.globalAlpha = 0.85; c.fillStyle = INK; c.fillRect(x - 12 * s, y + 18 * s, 24 * s, 26 * s); c.restore(); }
+      if (k % 3 === 1) brush(c, [[x + 80, y + 70, 0.4], [x + 74, y - 40, 1.2], [x + 84, y - 150, 0.6], [x + 92, y - 40, 1.2], [x + 86, y + 70, 0.4]], seg(t, at + 1.0 + k * 0.1, 0.7), 5, 540 + k);
+    }
+    brush(c, [[-40, y0 + 120, 0.5], [600, y0 + 110, 1], [1300, y0 + 125, 1], [1960, y0 + 112, 0.5]], seg(t, at + 1.4, 1.6), 3, 560, INK);
+  }
+  function gunfire(c, t, a, b, y0) {   // small bursts in the windows between a and b
+    if (t < a || t > b) return;
+    for (let k = 0; k < 28; k++) {
+      const tk = a + hash(k * 3) * (b - a), age = t - tk;
+      if (age < 0 || age > 0.5) continue;
+      const x = 160 + Math.floor(hash(k * 7) * 11) * 160, y = y0 + 50;
+      blob(c, x + (hash(k) - 0.5) * 40, y, 6 + 10 * (1 - age * 2), 0.9 * (1 - age * 2), k + 900);
+    }
+  }
+  function plaster(c, t, at, x, y) {   // a forearm in a white cast, held in a sling, a hockey stick behind
+    brush(c, [[x + 300, y - 360, 0.5], [x + 250, y - 60, 1.1], [x + 230, y + 220, 1.1], [x + 170, y + 300, 1.3], [x + 90, y + 290, 0.7]], seg(t, at, 0.9), 8, 600, SOFT);
+    const ck = seg(t, at + 0.4, 0.9);
+    if (ck > 0) {   // the cast: a pale tube with a heavy ink outline
+      c.save(); c.translate(x, y); c.rotate(-0.32); c.globalAlpha = ck;
+      c.fillStyle = '#FBF8F1'; c.beginPath(); c.roundRect(-230, -62, 400, 124, 56); c.fill(); c.restore();
+    }
+    const R = (px, py) => { const a = -0.32, cs = Math.cos(a), sn = Math.sin(a); return [x + px * cs - py * sn, y + px * sn + py * cs, 1]; };
+    brush(c, [R(-230, -62), R(170, -62), R(206, -20), R(206, 20), R(170, 62), R(-230, 62)], ck, 7, 601);
+    brush(c, [R(-230, -62), R(-258, 0), R(-230, 62)], ck, 6, 602);
+    for (let j = 0; j < 7; j++) brush(c, [R(-190 + j * 52, -56), R(-170 + j * 52, 56)], seg(t, at + 1.0 + j * 0.06, 0.3), 2.2, 610 + j, SOFT);
+    for (let j = 0; j < 4; j++) brush(c, [R(206, -36 + j * 24), R(262, -44 + j * 26), R(286, -40 + j * 27)], seg(t, at + 1.3 + j * 0.08, 0.4), 6, 620 + j);
+    // the sling, from the shoulder
+    brush(c, [[x - 330, y - 420, 0.6], [x - 250, y - 120, 1.1], [x - 200, y + 70, 1.2], [x + 40, y + 80, 1.2], [x + 120, y - 120, 1], [x + 40, y - 420, 0.6]], seg(t, at + 1.6, 1.4, 'sine.inOut'), 6, 630, SOFT, 0.6);
+  }
+  function dakota(c, x, y, s, k) {   // a DC-3 seen from above
+    if (k <= 0) return;
+    c.save(); c.translate(x, y); c.scale(s, s); c.globalAlpha = k; c.fillStyle = INK;
+    c.beginPath(); c.ellipse(0, 0, 70, 9, 0, 0, Math.PI * 2); c.fill();
+    c.beginPath(); c.moveTo(-10, -4); c.lineTo(8, -95); c.lineTo(26, -95); c.lineTo(20, -4); c.lineTo(20, 4); c.lineTo(26, 95); c.lineTo(8, 95); c.lineTo(-10, 4); c.closePath(); c.fill();
+    c.beginPath(); c.moveTo(-58, -2); c.lineTo(-66, -30); c.lineTo(-56, -30); c.lineTo(-48, -2); c.lineTo(-48, 2); c.lineTo(-56, 30); c.lineTo(-66, 30); c.lineTo(-58, 2); c.closePath(); c.fill();
+    c.restore();
+  }
+  function book(c, t, at, x, y, lines) {   // an open book with lines of Devanagari
+    const k = seg(t, at, 0.8);
+    brush(c, [[x - 300, y + 20, 0.6], [x - 150, y - 10, 1], [x, y + 20, 1], [x + 150, y - 10, 1], [x + 300, y + 20, 0.6]], k, 5, 700);
+    brush(c, [[x - 300, y + 300, 0.6], [x - 150, y + 270, 1], [x, y + 300, 1], [x + 150, y + 270, 1], [x + 300, y + 300, 0.6]], k, 5, 701);
+    brush(c, [[x - 300, y + 20, 0.6], [x - 300, y + 300, 1]], k, 4, 702); brush(c, [[x + 300, y + 20, 0.6], [x + 300, y + 300, 1]], k, 4, 703);
+    brush(c, [[x, y + 20, 0.6], [x, y + 300, 1]], k, 3, 704);
+    lines.forEach((l, i) => write(c, t, at + 0.6 + i * 0.3, l, x + (i % 2 ? 30 : -270), y + 90 + Math.floor(i / 2) * 60, 30, { weight: 500, col: SOFT }));
+  }
+  function medal(c, x, y, r, k) {   // the Param Vir Chakra: a disc with four vajras around the state emblem
+    if (k <= 0) return;
+    c.save(); c.translate(x, y); c.globalAlpha = k;
+    c.strokeStyle = INK; c.lineWidth = 6; c.beginPath(); c.arc(0, 0, r, 0, Math.PI * 2); c.stroke();
+    c.lineWidth = 2; c.beginPath(); c.arc(0, 0, r - 14, 0, Math.PI * 2); c.stroke();
+    for (let q = 0; q < 4; q++) {
+      c.save(); c.rotate(q * Math.PI / 2 + Math.PI / 4);
+      c.fillStyle = INK; c.beginPath(); c.moveTo(0, -r * 0.26); c.lineTo(-r * 0.09, -r * 0.5); c.lineTo(0, -r * 0.8); c.lineTo(r * 0.09, -r * 0.5); c.closePath(); c.fill();
+      c.beginPath(); c.arc(0, -r * 0.5, r * 0.06, 0, Math.PI * 2); c.fillStyle = PAPER; c.fill();
+      c.restore();
+    }
+    c.beginPath(); c.arc(0, 0, r * 0.2, 0, Math.PI * 2); c.fillStyle = INK; c.fill();
+    c.restore();
+    // the ribbon
+    c.save(); c.globalAlpha = k * 0.85; c.fillStyle = SOFT; c.fillRect(x - r * 0.42, y - r - 160, r * 0.84, 140); c.restore();
+  }
+  function stampCard(c, x, y, w, k, rot) {   // the 2003 India Post stamp, mounted on paper
+    if (k <= 0 || !stampImg.complete || !stampImg.naturalWidth) return;
+    const h = w * stampImg.naturalHeight / stampImg.naturalWidth;
+    c.save(); c.translate(x, y); c.rotate(rot || -0.03); c.globalAlpha = k;
+    c.fillStyle = 'rgba(40,30,20,0.18)'; c.fillRect(-w / 2 + 10, -h / 2 + 14, w, h);
+    c.drawImage(stampImg, -w / 2, -h / 2, w, h);
+    c.restore();
+    write(c, 99999, 0, '', 0, 0, 10);
+  }
+
+  // ---------- the scenes ----------
+  // each scene: [start time, draw(c, t)]; a scene runs until the next starts; changes are wiped with a soft paper edge
+  const SC = [];
+  const scene = (at, fn) => SC.push({ at, fn });
+
+  // 1. cold open
+  scene(0, (c, t) => {
+    houses(c, t, 0.2, 640);
+    card(c, t, L(1), '3 नवंबर 1947', 'बडगाम, कश्मीर', 120, 190, { out: L(5) - 0.4 });
+    write(c, t, L(2) + 1.2, 'श्रीनगर हवाई अड्डे से 5 कि.मी.', 122, 300, 34, { weight: 500, col: SOFT, out: L(5) - 0.4 });
+    gunfire(c, t, L(3) + 0.8, L(7), 640);
+    // the radio: waves from the foreground
+    const rk = seg(t, L(4), 0.6);
+    for (let j = 0; j < 3; j++) { const ph = ((t - L(4)) * 0.8 + j / 3) % 1; if (rk > 0) { c.save(); c.globalAlpha = rk * (1 - ph) * 0.7; c.strokeStyle = ACC; c.lineWidth = 3; c.beginPath(); c.arc(1660, 980, 40 + ph * 160, -2.6, -1.4); c.stroke(); c.restore(); } }
+    write(c, t, L(5), 'दुश्मन सिर्फ़ 50 गज दूर है।', 120, 260, 92, { out: L(7) - 0.3 });
+    write(c, t, L(6) + 2.4, 'भारत का पहला परमवीर', 124, 360, 46, { weight: 500, col: ACC, out: L(7) - 0.3 });
+  });
+  // 2. promise and title
+  scene(L(7) - 0.3, (c, t) => {
+    const v = { lon: 74.5, lat: 34.05, s: 1250 };
+    valley(c, t, v, { at: L(7) - 0.3, road: true, places: ['muz', 'bar', 'sgr', 'bad', 'air'], airAcc: true });
+    const a = proj(v, 74.77, 33.99), pk = (t - L(8)) % 1.4;
+    if (t > L(8)) { c.save(); c.globalAlpha = 0.8 * (1 - pk / 1.4); c.strokeStyle = ACC; c.lineWidth = 4; c.beginPath(); c.arc(a[0], a[1], 20 + pk * 70, 0, Math.PI * 2); c.stroke(); c.restore(); }
+    write(c, t, L(8) + 1.4, 'कश्मीर तक भारत का इकलौता तेज़ रास्ता', 120, 170, 46, { col: ACC, out: L(10) - 0.6 });
+    // title card over a paper sheet
+    const tk = seg(t, L(10) - 0.4, 0.7, 'power3.inOut');
+    if (tk > 0) {
+      c.save(); c.globalAlpha = tk; c.fillStyle = PAPER; c.fillRect(0, 0, W, H); c.restore();
+      stampCard(c, 1430, 540, 380, seg(t, L(10) - 0.1, 0.8), -0.04);
+      card(c, t, L(10) - 0.1, 'मेजर सोमनाथ शर्मा', 'परमवीर चक्र · बडगाम · 1947', 140, 560, { size: 104 });
+      write(c, t, L(10) + 1.2, 'स्टैम्प: इंडिया पोस्ट, 2003', 1430 - 190, 1000 - 70, 22, { weight: 500, col: SOFT, font: SANS });
+    }
+  });
+  // 3. a family of soldiers, Burma
+  scene(L(11) - 0.3, (c, t) => {
+    if (t < L(13) - 0.3) {
+      brush(c, [[100, 760, 0.5], [420, 600, 1.2], [700, 680, 1], [1020, 560, 1.3], [1350, 650, 1], [1820, 590, 0.5]], seg(t, L(11) - 0.3, 2.2, 'sine.inOut'), 6, 800, INK, 0.6);
+      card(c, t, L(11), '31 जनवरी 1923', 'दाढ़, कांगड़ा (हिमाचल)', 140, 300);
+      const vk = seg(t, L(12), 0.6, 'back.out(1.8)'); blob(c, 1020, 740, 14 * vk, 1, 801, ACC);
+      write(c, t, L(12) + 0.3, 'दाढ़', 1046, 730, 40, { weight: 700, col: ACC });
+      return;
+    }
+    if (t < L(16) - 0.2) {   // the family tree
+      const n = [[960, 250, 'पिता · मेजर जनरल अमरनाथ शर्मा', 'सेना में डॉक्टर', L(14)], [960, 560, 'सोमनाथ', '', L(13)],
+        [470, 820, 'भाई · इंजीनियर-इन-चीफ़', '', L(15)], [1450, 820, 'बहन · मेजर (डॉ.) कमला', 'सेना में डॉक्टर', L(15) + 1.6]];
+      brush(c, [[960, 290, 1], [960, 500, 1]], seg(t, L(14) + 0.4, 0.8), 4, 820);
+      brush(c, [[960, 600, 1], [960, 690, 1], [470, 690, 1], [470, 760, 1]], seg(t, L(15), 1.0), 4, 821);
+      brush(c, [[960, 690, 1], [1450, 690, 1], [1450, 760, 1]], seg(t, L(15) + 1.4, 0.8), 4, 822);
+      n.forEach((q, i) => { write(c, t, q[4], q[2], q[0], q[1], i === 1 ? 64 : 40, { align: 'center', col: i === 1 ? ACC : INK }); if (q[3]) write(c, t, q[4] + 0.6, q[3], q[0], q[1] + 44, 30, { align: 'center', weight: 500, col: SOFT }); });
+      return;
+    }
+    if (t < L(17) - 0.2) { book(c, t, L(16) - 0.1, 960, 380, ['कर्म', 'धर्म', 'कृष्ण', 'अर्जुन']); write(c, t, L(16) + 1.2, 'दादा जी से गीता', 960, 820, 48, { align: 'center' }); return; }
+    if (t < L(19) - 0.2) {   // schools to commission
+      const st = [[300, 'शेरवुड कॉलेज', 'नैनीताल', L(17)], [860, 'प्रिंस ऑफ़ वेल्स RMC', 'देहरादून', L(17) + 2.2], [1460, '22 फ़रवरी 1942', 'कमीशन · 19 हैदराबाद रेजिमेंट', L(18)]];
+      brush(c, [[160, 560, 0.6], [960, 556, 1], [1780, 560, 0.6]], seg(t, L(17) - 0.2, 2.0, 'sine.inOut'), 5, 830);
+      st.forEach((q, i) => { blob(c, q[0], 558, 13 * seg(t, q[3], 0.4, 'back.out(1.6)'), 1, 831 + i, i === 2 ? ACC : INK); write(c, t, q[3] + 0.2, q[1], q[0], 500, 42, { align: 'center', col: i === 2 ? ACC : INK }); write(c, t, q[3] + 0.6, q[2], q[0], 630, 30, { align: 'center', weight: 500, col: SOFT }); });
+      write(c, t, L(18) + 3.0, '(बाद में कुमाऊँ रेजिमेंट)', 1460, 680, 30, { align: 'center', weight: 500, col: SOFT });
+      return;
+    }
+    if (t < L(26) - 0.2) {   // Burma: grass and a trail carried back to camp
+      card(c, t, L(19), 'अराकान, बर्मा', 'दूसरा विश्व युद्ध', 120, 210);
+      [[380, 10], [880, 12], [1360, 10]].forEach(([cx, n], g) => { for (let k = 0; k < n; k++) { const x = cx + (k - n / 2) * 24, h = 140 + hash(g * 40 + k) * 220 * (1 - Math.abs(k - n / 2) / n), ln = (hash(g * 40 + k + 3) - 0.5) * 110; brush(c, [[x, 800, 1.1], [x + ln * 0.3, 800 - h * 0.5, 0.9], [x + ln, 800 - h, 0.2]], seg(t, L(19) + 0.3 + g * 0.4 + hash(k) * 0.6, 0.5), 7, 840 + g * 20 + k); } });
+      const trail = [[1840, 900, 0.5], [1500, 880, 1], [1120, 920, 1], [760, 885, 1], [420, 915, 1], [200, 900, 0.5]];
+      brush(c, trail, seg(t, L(22), E(25) - L(22), 'sine.inOut'), 4, 870, SOFT);
+      // the carrier: one mark bearing another, moving along the trail
+      const P = sample(trail), pr = seg(t, L(22), E(25) - L(22), 'sine.inOut'), q = P[Math.floor((P.length - 1) * pr)];
+      if (t > L(21)) { blob(c, q[0], q[1] - 34, 18, 1, 871); blob(c, q[0] + 4, q[1] - 66, 14, 0.9, 872); }
+      const tent = seg(t, L(25), 0.8);
+      brush(c, [[100, 900, 0.6], [180, 760, 1.2], [260, 900, 1], [80, 902, 0.6]], tent, 6, 873);
+      write(c, t, L(20), 'सेना का शोध पत्र (CLAWS, 2015)', 124, 290, 30, { weight: 500, col: SOFT });
+      write(c, t, L(24), '"मैं इसे पीछे नहीं छोड़ूँगा।"', 124, 400, 64, { col: ACC, out: L(26) - 0.6 });
+      return;
+    }
+    // three things to remember
+    [['जेब में ?', 460], ['एक मेडल ?', 960], ['एक मज़ाक ?', 1460]].forEach(([s, x], i) => {
+      const at = L(26) + 1.6 + i * 1.2, k = seg(t, at, 0.6);
+      brush(c, [[x - 190, 380, 1], [x + 190, 380, 1], [x + 190, 640, 1], [x - 190, 640, 1], [x - 188, 382, 1]], k, 4, 880 + i);
+      write(c, t, at + 0.3, s, x, 535, 56, { align: 'center', col: i === 0 ? ACC : INK });
+    });
+  });
+  // 4. Kashmir, October 1947
+  scene(L(27) - 0.3, (c, t) => {
+    const z = seg(t, L(30), 2.0, 'power2.inOut'), v = { lon: lerp(74.25, 74.6, z), lat: lerp(34.08, 34.04, z), s: lerp(1050, 1400, z) };
+    valley(c, t, v, { at: L(27) - 0.3, road: true, places: ['muz', 'uri', 'bar', 'pat', 'sgr', 'air'], airAcc: t > L(31) });
+    card(c, t, L(27), '22 अक्टूबर 1947', 'क़बायली हमला', 120, 860, { out: L(29) - 0.3 });
+    // raiders up the road
+    const rp = seg(t, L(28), 5.0, 'sine.inOut');
+    const road = ROAD.slice(0, 7).map(q => proj(v, q[0], q[1]).concat(1.3));
+    arrow(c, road, rp, 7, 900, SOFT);
+    for (let k = 0; k < 3; k++) arrow(c, [proj(v, 73.6, 34.5 - k * 0.12).concat(1), proj(v, 74.0 + k * 0.1, 34.3 - k * 0.05).concat(1)], seg(t, L(28) + 0.6 + k * 0.4, 2.0), 4, 905 + k, SOFT);
+    if (rp > 0.3) { const m = proj(v, 74.1, 34.28); write(c, t, L(28) + 2.0, 'हमलावर →', m[0] - 40, m[1] - 40, 40, { col: SOFT }); }
+    card(c, t, L(29), '26 अक्टूबर', 'भारत में विलय', 120, 860, { out: L(30) - 0.3 });
+    card(c, t, L(30), '27 अक्टूबर', 'पहली टुकड़ी हवाई जहाज़ से', 120, 860, { out: L(31) + 0.6 });
+    const a = proj(v, 74.77, 33.99);
+    for (let k = 0; k < 3; k++) { const p = seg(t, L(30) + 0.8 + k * 1.1, 3.0, 'power2.inOut'); if (p > 0 && p < 1) dakota(c, lerp(1950, a[0], p) + 30 * k, lerp(1150, a[1], p) - 20 * k, 0.45, 1 - seg(p, 0.85, 0.15)); }
+    write(c, t, L(31) + 1.2, 'सिर्फ़ एक रास्ता: हवा', 120, 860, 64, { col: ACC });
+  });
+  // 5. the plaster and the joke
+  scene(L(33) - 0.3, (c, t) => {
+    if (t < L(37) - 0.2) {
+      card(c, t, L(33), 'डेल्टा कंपनी · 4 कुमाऊँ', 'कमांडर: मेजर सोमनाथ शर्मा, "सोमी"', 120, 200);
+      plaster(c, t, L(34) + 0.3, 1260, 600);
+      const sk = seg(t, L(35) + 2.2, 0.35, 'back.out(1.4)');
+      if (sk > 0) { c.save(); c.translate(560, 600); c.rotate(-0.12); c.scale(lerp(1.3, 1, sk), lerp(1.3, 1, sk)); c.globalAlpha = sk; c.strokeStyle = INK; c.lineWidth = 6; c.strokeRect(-180, -60, 360, 120); c.font = `700 72px ${SANS}`; c.textAlign = 'center'; c.fillStyle = INK; c.fillText('अनफ़िट', 0, 26); c.restore(); }
+      write(c, t, L(36), '"अगर मेरे जवान लड़ने जा रहे हैं,', 120, 840, 50, { col: INK });
+      write(c, t, L(36) + 3.2, 'तो मेरे बिना नहीं जाएँगे।"', 120, 910, 50, { col: ACC });
+      return;
+    }
+    card(c, t, L(37), '31 अक्टूबर 1947', 'डेल्टा कंपनी श्रीनगर पहुँची', 120, 210);
+    const p = seg(t, L(37) - 0.2, 3.2, 'power2.out'); dakota(c, lerp(-200, 1400, p), lerp(760, 520, p), 1.1, 1);
+    const jk = L(38) + 2.4;
+    write(c, t, jk, 'विक्टोरिया क्रॉस', 420, 860, 70, { align: 'center' });
+    write(c, t, jk + 0.8, 'या', 960, 860, 50, { align: 'center', col: SOFT, weight: 500 });
+    write(c, t, jk + 1.4, 'सेना प्रमुख', 1500, 860, 70, { align: 'center' });
+  });
+  // 6. the patrol, 7. the turn, 8. the attack (one tactical map)
+  scene(L(39) - 0.3, (c, t) => {
+    const air = t > L(53);
+    tactical(c, t, L(39) - 0.3, { airAcc: t > L(54) });
+    card(c, t, L(41), '3 नवंबर 1947', 'सुबह · गश्त बडगाम की ओर', 120, 170, { out: L(46) - 0.4 });
+    // companies move from the airfield to Badgam, then two go back
+    const go = seg(t, L(41) + 0.6, 3.0, 'power2.inOut'), back = seg(t, L(46) + 0.4, 2.6, 'power2.inOut');
+    const A = [lerp(AIR[0] - 120, POS[0] - 140, go), lerp(AIR[1] + 70, POS[1] + 90, go)];
+    const P1 = [lerp(AIR[0] - 40, BAD[0] - 220, go), lerp(AIR[1] + 70, BAD[1] - 150, go)];
+    const Dc = [lerp(AIR[0] + 40, POS[0], go), lerp(AIR[1] + 70, POS[1], go)];
+    company(c, lerp(A[0], AIR[0] - 120, back), lerp(A[1], AIR[1] + 80, back), seg(t, L(41) + 0.2, 0.4) * (1 - 0.6 * back), 'A', false, 1);
+    company(c, lerp(P1[0], AIR[0] - 40, back), lerp(P1[1], AIR[1] + 80, back), seg(t, L(41) + 0.4, 0.4) * (1 - 0.6 * back), '1 कु.', false, 2);
+    const dLost = seg(t, L(56), 1.0);
+    company(c, Dc[0], Dc[1], seg(t, L(41) + 0.6, 0.4), 'D', t > L(46), 3);
+    // the "refugees" in the nala
+    const nk = seg(t, L(43), 1.0);
+    brush(c, [[360, 760, 0.5], [520, 790, 1], [700, 770, 1], [880, 800, 0.5]], nk, 3, 340, SOFT);
+    write(c, t, L(43) + 0.6, 'नाला · "शरणार्थी"', 520, 850, 30, { weight: 500, col: SOFT, out: L(50) });
+    // the lashkar gathers in small groups, then closes on D company from three sides
+    const close = seg(t, L(48), E(49) - L(48) + 1.5, 'power2.inOut'), attack = seg(t, L(50), 6.0, 'power2.in'), hold = t > L(55) ? 0.2 * seg(t, L(55), 1.0) : 0;
+    RAID.forEach((r, k) => {
+      const appear = L(44) + r.d * (L(46) - L(44) + 2);
+      const ak = seg(t, appear, 0.4); if (ak <= 0) return;
+      const gx = 420 + (k % 7) * 30 + hash(k) * 160, gy = 740 + hash(k * 3) * 70;     // gathered near the nala
+      const ex = POS[0] + Math.cos(r.a) * r.r * 1.3, ey = POS[1] - Math.sin(r.a) * r.r * 0.9;  // around D company, west, north, south
+      const fx = POS[0] + Math.cos(r.a) * r.r * (0.55 + hold), fy = POS[1] - Math.sin(r.a) * r.r * (0.45 + hold * 0.7);
+      let x = lerp(gx, ex, close), y = lerp(gy, ey, close); x = lerp(x, fx, attack); y = lerp(y, fy, attack);
+      blob(c, x + (vn(SEED * 0.5 + k, 6) - 0.5) * 4, y, r.sz, 0.8 * ak, k + 40, SOFT);
+    });
+    write(c, t, L(45) + 0.6, 'योजना: लगभग 1000 जमा हों, तब हमला', 120, 300, 40, { col: SOFT, out: L(47) });
+    write(c, t, L(46) + 0.4, '2:00 PM', 1500, 210, 56, { font: TYPE, weight: 400, out: L(48) });
+    write(c, t, L(47) + 0.2, '"एक घंटा और रुको"', 1500, 280, 40, { col: ACC, out: L(49) + 1 });
+    // the attack
+    if (t > L(50)) {
+      for (let k = 0; k < 16; k++) { const tk = L(50) + hash(k * 3) * (L(63) - L(50)); const age = t - tk; if (age > 0 && age < 1.6) blob(c, POS[0] + (hash(k * 5) - 0.5) * 300, POS[1] + (hash(k * 7) - 0.5) * 220, 10 + 50 * S.ease('expo.out')(Math.min(1, age / 0.6)), 0.45 * (1 - age / 1.6), 960 + k); }
+      [[[100, 620], [POS[0] - 120, POS[1]]], [[640, 160], [POS[0] - 20, POS[1] - 90]], [[620, 1060], [POS[0] - 10, POS[1] + 90]]].forEach((q, i) => arrow(c, [q[0].concat(1.2), q[1].concat(1)], seg(t, L(50) + 0.4 + i * 0.5, 1.4), 8, 970 + i, INK));
+    }
+    write(c, t, L(51) + 1.6, '~500', 1240, 760, 64, { font: TYPE, weight: 400, out: L(53) - 0.2 });
+    write(c, t, L(51) + 1.6, 'प्रशस्ति-पत्र', 1240, 806, 28, { weight: 500, col: SOFT, out: L(53) - 0.2 });
+    write(c, t, L(51) + 4.0, '~700', 1520, 760, 64, { font: TYPE, weight: 400, out: L(53) - 0.2 });
+    write(c, t, L(51) + 4.0, 'इतिहासकार', 1520, 806, 28, { weight: 500, col: SOFT, out: L(53) - 0.2 });
+    write(c, t, L(52) + 1.0, '~90', 1240, 930, 64, { font: TYPE, weight: 400, col: ACC, out: L(53) - 0.2 });
+    write(c, t, L(53), '7 : 1', 1340, 860, 140, { font: TYPE, weight: 400, col: ACC, out: L(55) });
+    // the three platoons: two fall
+    if (t > L(56) - 0.3) {
+      [[-80, -70], [80, -70], [0, 70]].forEach((o, i) => {
+        const gone = i < 2 ? seg(t, L(56) + 1.2 + i * 0.8, 0.8) : 0;
+        c.save(); c.globalAlpha = 1 - gone * 0.85; c.strokeStyle = ACC; c.lineWidth = 4; c.strokeRect(POS[0] + o[0] - 26, POS[1] + o[1] - 18, 52, 36); c.restore();
+      });
+    }
+    // Somnath: a single accent mark moving between positions
+    if (t > L(57) && t < L(68)) { const ph = (t - L(57)) * 0.7, x = POS[0] + Math.sin(ph) * 70, y = POS[1] + Math.sin(ph * 1.7) * 60; blob(c, x, y, 9, 1, 990, ACC); }
+    // cloth strips and the aircraft
+    const ck = seg(t, L(58), 1.2);
+    if (ck > 0) { for (let k = 0; k < 3; k++) { c.save(); c.globalAlpha = ck; c.fillStyle = PAPER; c.strokeStyle = INK; c.lineWidth = 2; c.translate(POS[0] + 160 + k * 26, POS[1] - 150 + k * 30); c.rotate(0.5); c.fillRect(-40, -7, 80, 14); c.strokeRect(-40, -7, 80, 14); c.restore(); } }
+    for (let k = 0; k < 2; k++) { const p = seg(t, L(58) + 1.5 + k * 1.4, 2.6, 'none'); if (p > 0 && p < 1) dakota(c, lerp(1900, -100, p), lerp(220 + k * 90, 520 + k * 90, p), 0.35, 1); }
+    // magazines
+    for (let k = 0; k < 6; k++) { const mk = seg(t, L(59) + 2.2 + k * 0.35, 0.3); if (mk > 0) { c.save(); c.globalAlpha = mk; c.fillStyle = INK; c.fillRect(1240 + k * 46, 900, 30, 64); c.restore(); } }
+    write(c, t, L(60) + 1.4, 'ब्रिगेड: "पीछे हटो"', 1240, 300, 46, { out: L(62) });
+    write(c, t, L(61), 'नहीं।', 1240, 400, 120, { col: ACC, out: L(62) });
+    // the ruler: 100, 80, 50 yards
+    if (t > L(62)) {
+      const marks = [['100 गज', L(62) + 1.6], ['80', L(62) + 2.6], ['50', L(62) + 3.6]];
+      brush(c, [[1240, 300, 1], [1800, 300, 1]], seg(t, L(62), 0.6), 3, 995);
+      marks.forEach((m, i) => { const x = 1240 + i * 260; blob(c, x, 300, 9 * seg(t, m[1], 0.3), 1, 996 + i, i === 2 ? ACC : INK); write(c, t, m[1], m[0], x, 270, i === 2 ? 70 : 44, { align: 'center', col: i === 2 ? ACC : INK }); });
+    }
+  });
+  // 9. the last message: back to the cold open
+  scene(L(63) - 0.3, (c, t) => {
+    houses(c, 99, 0, 640);
+    c.save(); c.globalAlpha = 0.35; c.fillStyle = PAPER; c.fillRect(0, 0, W, H); c.restore();
+    const msg = [['The enemy are only 50 yards from us.', L(64)], ['We are heavily outnumbered.', L(65)], ['We are under devastating fire.', L(65) + 2.4],
+      ['I shall not withdraw an inch', L(66)], ['but will fight to the last man and the last round.', L(67)]];
+    msg.forEach((m, i) => write(c, t, m[1], m[0], 140, 170 + i * 74, 50, { font: TYPE, weight: 400, col: i >= 3 ? ACC : INK, dur: 0.05 * m[0].length }));
+    write(c, t, L(63) + 0.6, 'ब्रिगेड हेडक्वार्टर को आख़िरी संदेश', 140, 100, 34, { weight: 500, col: SOFT });
+  });
+  // 10. the shell
+  scene(L(68) - 0.3, (c, t) => {
+    brush(c, [[100, 760, 0.6], [600, 720, 1.2], [1100, 760, 1.2], [1820, 720, 0.6]], seg(t, L(68) - 0.3, 1.6), 9, 1100);
+    brush(c, [[100, 860, 0.6], [700, 820, 1.2], [1200, 870, 1.2], [1820, 830, 0.6]], seg(t, L(68), 1.6), 7, 1101, SOFT);
+    // a Bren gun and an open ammunition box
+    brush(c, [[760, 700, 0.8], [1080, 640, 1.3], [1180, 620, 0.8]], seg(t, L(68) + 1.0, 0.8), 10, 1102);
+    brush(c, [[900, 690, 0.8], [880, 740, 1]], seg(t, L(68) + 1.4, 0.4), 6, 1103);
+    brush(c, [[1260, 640, 1], [1400, 640, 1], [1400, 720, 1], [1260, 720, 1], [1260, 642, 1]], seg(t, L(68) + 1.8, 0.6), 5, 1104);
+    const bk = seg(t, L(69) + 2.2, 1.8, 'expo.out'), bleed = seg(t, L(69) + 3.8, 6, 'sine.out');
+    if (bk > 0) {
+      blob(c, 1330, 660, 120 + 900 * bk + 120 * bleed, 0.94, 1110);
+      for (let k = 0; k < 40; k++) { const a = hash(k * 13) * Math.PI * 2, d = (300 + hash(k * 7) * 800) * bk; blob(c, 1330 + Math.cos(a) * d, 660 + Math.sin(a) * d * 0.7, 3 + hash(k * 5) * 12, 0.95, 1120 + k); }
+    }
+    write(c, t, L(70), 'वीरगति', 960, 520, 120, { align: 'center', col: PAPER, out: L(72) - 0.2 });
+    write(c, t, L(71) + 0.4, 'सूबेदार प्रेम सिंह मेहता', 960, 640, 46, { align: 'center', col: PAPER, weight: 500, out: L(72) - 0.2 });
+    write(c, t, L(71) + 2.0, 'और लगभग 20 जवान', 960, 700, 46, { align: 'center', col: PAPER, weight: 500, out: L(72) - 0.2 });
+    write(c, t, L(72) + 0.8, '24', 960, 560, 260, { align: 'center', col: ACC, font: TYPE, weight: 400 });
+    write(c, t, L(72) + 1.4, 'साल', 960, 650, 56, { align: 'center', col: PAPER, weight: 500 });
+  });
+  // 11. what the stand bought, then the holster and the Gita pages
+  scene(L(73) - 0.3, (c, t) => {
+    if (t < L(78) - 0.3) {
+      tactical(c, t, L(73) - 0.5, { airAcc: true });
+      company(c, POS[0], POS[1], 1, 'D', true, 3);
+      // six hours: a clock sweep
+      const ck = seg(t, L(74), 3.5, 'power2.inOut');
+      c.save(); c.translate(1500, 230); c.strokeStyle = INK; c.lineWidth = 4; c.beginPath(); c.arc(0, 0, 90, 0, Math.PI * 2); c.stroke();
+      if (ck > 0) { c.fillStyle = ACC; c.globalAlpha = 0.85; c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, 86, -Math.PI / 2, -Math.PI / 2 + Math.PI * ck); c.closePath(); c.fill(); }
+      c.restore();
+      write(c, t, L(74) + 1.0, '6 घंटे', 1640, 250, 64, { col: ACC });
+      for (let k = 0; k < 3; k++) arrow(c, [[AIR[0] - 60, AIR[1] + 120 + k * 30, 1], [lerp(AIR[0], POS[0], 0.5), POS[1] + 100 + k * 20, 1], [POS[0] + 240, POS[1] + 60 + k * 30, 1]], seg(t, L(75) + k * 0.3, 1.6), 6, 1200 + k);
+      const blk = seg(t, L(76), 1.0);
+      brush(c, [[1150, 380, 1], [1170, 520, 1.2], [1150, 660, 1]], blk, 12, 1210, ACC);
+      write(c, t, L(76) + 1.0, 'नया मोर्चा · हवाई अड्डे का रास्ता', 1200, 720, 34, { col: ACC, weight: 500 });
+      const nk = seg(t, L(77) + 1.0, 2.0);
+      if (nk > 0) { c.save(); c.globalAlpha = 0.28 * nk; c.fillStyle = '#20232a'; c.fillRect(0, 0, W, H); c.restore(); write(c, t, L(77) + 1.4, 'उस रात कोई हमला नहीं हुआ', 120, 960, 46, {}); }
+      return;
+    }
+    // the holster and three pages
+    brush(c, [[700, 380, 0.8], [880, 360, 1.2], [930, 520, 1.3], [860, 700, 1.2], [760, 690, 1], [700, 520, 1], [700, 382, 0.8]], seg(t, L(78) + 0.4, 1.4), 9, 1250, INK, 0.4);
+    brush(c, [[720, 430, 0.8], [900, 410, 1]], seg(t, L(78) + 1.6, 0.5), 5, 1251);
+    for (let k = 0; k < 3; k++) {
+      const pk = seg(t, L(79) + 2.6 + k * 0.6, 0.8, 'power2.out'), x = 1180 + k * 50, y = 420 + k * 34, r = -0.12 + k * 0.1;
+      if (pk <= 0) continue;
+      c.save(); c.translate(x, y); c.rotate(r); c.globalAlpha = pk; c.fillStyle = '#F7F1E4'; c.fillRect(-150, -190, 300, 380); c.strokeStyle = SOFT; c.lineWidth = 2; c.strokeRect(-150, -190, 300, 380);
+      c.font = `500 24px ${SERIF}`; c.fillStyle = SOFT; for (let j = 0; j < 9; j++) c.fillText('॥ श्रीमद्भगवद्गीता ॥'.slice(0, 6 + (j * 7 + k * 3) % 12), -120, -140 + j * 38);
+      c.restore();
+    }
+    write(c, t, L(79) + 4.0, 'होल्स्टर · और गीता के कुछ पन्ने', 700, 900, 50, { col: ACC });
+  });
+  // 12. the first Param Vir Chakra
+  scene(L(80) - 0.3, (c, t) => {
+    if (t < L(83) - 0.3) {
+      card(c, t, L(80), '26 जनवरी 1950', 'परमवीर चक्र की स्थापना', 120, 210);
+      medal(c, 620, 640, 170, seg(t, L(80) + 3, 1.0));
+      stampCard(c, 1400, 560, 360, seg(t, L(81), 0.8), 0.03);
+      write(c, t, L(81) + 1.0, 'पहला परमवीर चक्र · मरणोपरांत', 120, 940, 50, { col: ACC });
+      write(c, t, L(82) + 0.6, 'सम्मान लिया: पिता, मेजर जनरल अमरनाथ शर्मा', 1060, 1000 - 40, 30, { weight: 500, col: SOFT });
+      return;
+    }
+    if (t < L(86) - 0.3) {   // the family link
+      const nd = [[420, 330, 'सावित्री खानोलकर', 'परमवीर चक्र की डिज़ाइनर', L(83)], [420, 700, 'बेटी, कुमुदिनी', '', L(84)], [1500, 700, 'सोमनाथ के भाई', '', L(84) + 2.0], [1500, 330, 'मेजर सोमनाथ शर्मा', 'पहले परमवीर', L(85)]];
+      brush(c, [[420, 370, 1], [420, 640, 1]], seg(t, L(84), 0.8), 4, 1300);
+      brush(c, [[640, 690, 1], [1260, 690, 1]], seg(t, L(84) + 1.4, 1.0), 4, 1301, ACC);
+      brush(c, [[1500, 640, 1], [1500, 380, 1]], seg(t, L(85), 0.8), 4, 1302);
+      write(c, t, L(84) + 1.8, 'विवाह', 960, 670, 32, { align: 'center', col: ACC, weight: 500 });
+      nd.forEach(q => { write(c, t, q[4], q[2], q[0], q[1], 46, { align: 'center' }); if (q[3]) write(c, t, q[4] + 0.5, q[3], q[0], q[1] + 46, 30, { align: 'center', weight: 500, col: SOFT }); });
+      medal(c, 960, 360, 80, seg(t, L(85) + 1.5, 0.8));
+      return;
+    }
+    // the joke, paid off
+    const rows = [['विक्टोरिया क्रॉस', 'परमवीर चक्र', L(87)], ['सेना प्रमुख', 'भाई, जनरल विश्वनाथ शर्मा · 1988', L(88)]];
+    write(c, t, L(86), '"या तो विक्टोरिया क्रॉस… या सेना प्रमुख"', 960, 220, 50, { align: 'center', col: SOFT });
+    rows.forEach((r, i) => {
+      const y = 480 + i * 260;
+      write(c, t, r[2], r[0], 520, y, 64, { align: 'center' });
+      brush(c, [[340, y - 20, 1], [700, y - 30, 1]], seg(t, r[2] + 1.2, 0.5), 5, 1310 + i, ACC);
+      write(c, t, r[2] + 1.8, '→  ' + r[1], 820, y, 56, { col: ACC });
+    });
+  });
+  // 13. legacy
+  scene(L(89) - 0.3, (c, t) => {
+    book(c, t, L(89) - 0.2, 620, 380, ['कक्षा 8', 'A Tale of Valour', 'मेजर सोमनाथ शर्मा', 'बडगाम की लड़ाई']);
+    brush(c, [[1180, 760, 0.5], [1420, 620, 1.2], [1640, 700, 1], [1860, 640, 0.5]], seg(t, L(90), 1.6), 6, 1400, SOFT);
+    blob(c, 1520, 780, 12 * seg(t, L(90) + 1.0, 0.4), 1, 1401, ACC);
+    write(c, t, L(90) + 1.2, 'दाढ़', 1546, 772, 40, { col: ACC });
+    write(c, t, L(90) + 3.0, 'स्मारक? (2023 तक नहीं)', 1300, 880, 40, { weight: 500 });
+  });
+  // 14. close and end screen
+  scene(L(91) - 0.3, (c, t) => {
+    const end = E(92) + 0.4;
+    if (t < end) {
+      [['50 गज', 420, L(91)], ['प्लास्टर में बंधा हाथ', 960, L(91) + 1.5], ['एक इंच भी नहीं', 1500, L(91) + 3.6]].forEach((w, i) => write(c, t, w[2], w[0], w[1], 520, 64, { align: 'center', col: i === 2 ? ACC : INK }));
+      write(c, t, L(92) + 0.5, 'भारत के पहले परमवीर', 960, 700, 50, { align: 'center', weight: 500, col: SOFT });
+      return;
+    }
+    // end screen: room on the right for two YouTube end-screen elements
+    stampCard(c, 360, 520, 300, seg(t, end, 0.8), -0.03);
+    write(c, t, end + 0.3, 'अगले परमवीर की कहानी', 620, 420, 64, {});
+    write(c, t, end + 0.9, 'मेजर सोमनाथ शर्मा · 1923–1947', 620, 500, 36, { weight: 500, col: SOFT });
+    for (let k = 0; k < 2; k++) { const kk = seg(t, end + 1.2 + k * 0.3, 0.6); c.save(); c.globalAlpha = 0.35 * kk; c.setLineDash([10, 10]); c.strokeStyle = INK; c.lineWidth = 2; c.strokeRect(1220, 240 + k * 330, 560, 300); c.restore(); }
+    write(c, t, end + 2.0, 'स्रोत: PVC प्रशस्ति-पत्र; CLAWS Scholar Warrior (2015); L.P. Sen, Slender Was the Thread (1969). स्टैम्प: India Post 2003 (GODL-India).', 120, 1000, 22, { weight: 500, col: SOFT, font: SANS });
+  });
+
+  // ---------- compose ----------
+  const A = document.createElement('canvas'); A.width = W; A.height = H; const ac = A.getContext('2d');
+  const Bc = document.createElement('canvas'); Bc.width = W; Bc.height = H; const bc = Bc.getContext('2d');
+  const WIPE = 0.8;
+  function drawScene(c, i, t) {
+    c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, W, H);
+    const local = t - SC[i].at, drift = 1 + 0.012 * Math.min(1, local / 20);   // a slow push on every scene
+    c.setTransform(drift, 0, 0, drift, -960 * (drift - 1), -540 * (drift - 1));
+    SC[i].fn(c, t);
+    c.setTransform(1, 0, 0, 1, 0, 0);
+  }
+  S.play(function render(t) {
+    SEED = Math.floor(Math.round(t * 30) / 2);
+    const tq = SEED / 15;
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = paperPat; ctx.fillRect(0, 0, W, H);
+    let i = 0; while (i < SC.length - 1 && t >= SC[i + 1].at) i++;
+    const into = t - SC[i].at;
+    drawScene(ac, i, tq);
+    if (i > 0 && into < WIPE) {   // the new scene wipes in over the old with a soft paper edge
+      drawScene(bc, i - 1, tq);
+      const k = S.ease('power2.inOut')(into / WIPE), x = -300 + k * (W + 600);
+      const g = ac.createLinearGradient(x - 260, 0, x + 40, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      ac.save(); ac.globalCompositeOperation = 'destination-in'; ac.fillStyle = g; ac.fillRect(0, 0, W, H); ac.restore();
+      bc.save(); bc.globalCompositeOperation = 'destination-out'; bc.fillStyle = g; bc.fillRect(0, 0, W, H); bc.restore();
+      ctx.drawImage(Bc, 0, 0);
+    }
+    ctx.drawImage(A, 0, 0);
+    if (t > 0.8) subtitles(ctx, t);
+    ctx.globalAlpha = 0.55; ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1;
+    const fin = 1 - seg(t, B.D - 1.2, 1.2, 'power2.in'), fi = seg(t, 0, 0.6, 'power2.out');   // fade from and to paper
+    if (fin < 1 || fi < 1) { ctx.globalAlpha = 1 - Math.min(fin, fi); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, W, H); ctx.globalAlpha = 1; }
+  }, { loop: false });
+})();
+</script>
+</body>
+</html>
