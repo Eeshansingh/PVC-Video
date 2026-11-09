@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "historyId": "6c0e0961-c826-4a26-bb0b-ea521f4faa50",
+  "currentRevision": null,
+  "pendingChanges": false,
+  "files": {
+    "hyperframes.json": {
+      "hash": "9d8022339f0f5d9b325f5408a9d5ef5a63dfae4a3bf68abfaa243d718e54a4e9",
+      "content": "/root/.cache/hyperframes/history/6c0e0961-c826-4a26-bb0b-ea521f4faa50/blobs/9d/9d8022339f0f5d9b325f5408a9d5ef5a63dfae4a3bf68abfaa243d718e54a4e9"
+    },
+    "index.html": {
+      "hash": "93899fc2a704275418bc0d65821d2f4771729f2ffff71ec0672e35e373bd419b",
+      "content": "/root/.cache/hyperframes/history/6c0e0961-c826-4a26-bb0b-ea521f4faa50/blobs/93/93899fc2a704275418bc0d65821d2f4771729f2ffff71ec0672e35e373bd419b"
+    },
+    "meta.json": {
+      "hash": "030e539a59e884fa12cf3aaa4910b38fc65e90036cccb088cb6154ccb8eabc33",
+      "content": "/root/.cache/hyperframes/history/6c0e0961-c826-4a26-bb0b-ea521f4faa50/blobs/03/030e539a59e884fa12cf3aaa4910b38fc65e90036cccb088cb6154ccb8eabc33"
+    },
+    "studio.js": {
+      "hash": "b55c0f255aad0d9a93b6da40767ab726425531a9b5acd3c66a0bcf1233765d5a",
+      "content": "/root/.cache/hyperframes/history/6c0e0961-c826-4a26-bb0b-ea521f4faa50/blobs/b5/b55c0f255aad0d9a93b6da40767ab726425531a9b5acd3c66a0bcf1233765d5a"
+    },
+    "vendor/gsap.min.js": {
+      "hash": "c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280",
+      "content": "/root/.cache/hyperframes/history/6c0e0961-c826-4a26-bb0b-ea521f4faa50/blobs/c1/c174bfce53a729418d57a8ad8625e7247c793a22fef8e2851e3cfa3de9cd8280"
+    }
+  },
+  "revisions": {},
+  "checks": {
+    "latest": null,
+    "revisions": {},
+    "unversioned": []
+  },
+  "snapshots": {
+    "latest": {
+      "revision": null,
+      "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-6"
+    },
+    "revisions": {},
+    "unversioned": [
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-0",
+        "image": "/home/user/pvc-video/ink/stills/frame-00-at-6s.png",
+        "time": 6,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "8fb4d8bb6ddd4b7b2ab397101271679f4305abb61c9e44dffc01964dfe01b6d1",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-1",
+        "image": "/home/user/pvc-video/ink/stills/frame-01-at-30s.png",
+        "time": 30,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "30b3e5c58f2bd3b1d54111f2fd9f6a5af7f4b5d443efe41ed284d805f40a1448",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-2",
+        "image": "/home/user/pvc-video/ink/stills/frame-02-at-45.5s.png",
+        "time": 45.5,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "babbc5e2ed8ad83a98838cabd1eaa0c2a714178603d8d474d778cb1533247f47",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-3",
+        "image": "/home/user/pvc-video/ink/stills/frame-03-at-62.5s.png",
+        "time": 62.5,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "ee62265de88bcc9b4dc4ba8382582f496ec6742d7f742a64fefd34f760171de8",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-4",
+        "image": "/home/user/pvc-video/ink/stills/frame-04-at-69s.png",
+        "time": 69,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "d5043bc76dab8035ecf7067573a4a31bf93fce363fc8ddb3f1d1badd4db4b45e",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-5",
+        "image": "/home/user/pvc-video/ink/stills/frame-05-at-79.5s.png",
+        "time": 79.5,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "143a7392ffacd3da12e4997d8dcb03d56dd5fa65d9034cbbea5abecf3ad751ae",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      },
+      {
+        "scope": "full",
+        "id": "011e6e13-2bb3-4e43-a9fa-2d003990692a-6",
+        "image": "/home/user/pvc-video/ink/stills/frame-06-at-89s.png",
+        "time": 89,
+        "metadata": {
+          "width": 1920,
+          "height": 1080,
+          "zoomScale": 1,
+          "browserGpuMode": "auto",
+          "warnings": [],
+          "partial": false
+        },
+        "createdAt": 1794217063494,
+        "contentHash": "7c8ab65d4ceed6c1cc2c842cf6276e917f77a24a69618e733a54b436ad0ee6d2",
+        "revision": null,
+        "inputFingerprint": "26a540bd9e2423491ac251ba7ca5f51b75b96e7985a9887a2d21312ed3da66ef",
+        "inputScope": "local-project-files",
+        "attribution": "inputs-changed"
+      }
+    ]
+  }
+}

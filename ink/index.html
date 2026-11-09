@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=1920, height=1080" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Noto+Serif+Devanagari:wght@700&display=swap" />
+<script src="vendor/gsap.min.js"></script>
+<script src="studio.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #F4EFE6; }
+  #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; background: #F4EFE6; }
+  #cv { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; display: block; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="main" data-start="0" data-duration="90" data-width="1920" data-height="1080">
+  <canvas id="cv" width="1920" height="1080"></canvas>
+</div>
+<script>
+/*
+ * Major Somnath Sharma, in one ink scroll. 90 s, 1920 x 1080, one canvas drawn from t alone, ink on twos (15 fps).
+ * Style: ink-line (../STYLE-ink.md). The camera travels along a long sheet of washi; each chapter is drawn in sumi ink
+ * on fresh paper, and stays on the scroll behind us.
+ * Beat map:
+ *   0.0  title: a Himalayan ridge draws, his name is written above it
+ *  10.4  one life line rises through three ticks: born 1923, cadet at ten, officer at nineteen
+ *  22.4  Burma: grass, and a trail carried back to camp
+ *  34.4  Kashmir, October 1947: a ring of mountains, the river, Srinagar, raiders from the west
+ *  48.4  Badgam, 3 November 1947: the airfield, 70 dots, 1,000 specks close in on three sides
+ *  66.0  the blast. He fell at 24.  74.0 the raiders pull back; the airfield held
+ *  82.4  an enso for the Param Vir Chakra; the one vermilion seal stamps down last
+ */
+(function () {
+  'use strict';
+  const PAPER = '#F4EFE6', INK = '#1C1C1C', SOFT = '#43403C', SEAL_RED = '#D23C2A';
+  const TONES = ['#101010', '#171716', '#1f1e1d', '#292726', '#353230', '#43403c'];
+  const SERIF = '"Cormorant Garamond", serif';
+  const SEAL_CHAR = 'वीर', SEAL_FONT = '700 64px "Noto Serif Devanagari", serif';   // वीर, "brave"
+  const S = STUDIO, SW = 1920, SH = 1080;
+  const cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  const ink = document.createElement('canvas'); ink.width = SW; ink.height = SH; const ic = ink.getContext('2d');
+
+  // ---------- math ----------
+  const clamp = (x, a, b) => x < a ? a : x > b ? b : x;
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const sstep = (a, b, x) => { const k = clamp((x - a) / (b - a), 0, 1); return k * k * (3 - 2 * k); };
+  const seg = (t, a, d, e) => S.seg(t, a, d, e || 'sine.inOut');
+  function hash(i) { i = i | 0; i = Math.imul(i ^ (i >>> 16), 0x45d9f3b); i = Math.imul(i ^ (i >>> 16), 0x45d9f3b); i ^= i >>> 16; return (i >>> 0) / 4294967296; }
+  function vn(x, seed) { const i = Math.floor(x), f = x - i, u = f * f * (3 - 2 * f); return lerp(hash(i * 7919 + seed * 104729), hash((i + 1) * 7919 + seed * 104729), u); }
+  function track(t, keys) {
+    if (t <= keys[0][0]) return keys[0][1];
+    for (let i = 1; i < keys.length; i++) if (t <= keys[i][0]) {
+      const a = keys[i - 1], b = keys[i]; return lerp(a[1], b[1], S.ease(b[2] || 'power2.inOut')((t - a[0]) / (b[0] - a[0])));
+    }
+    return keys[keys.length - 1][1];
+  }
+
+  // ---------- centripetal Catmull-Rom through [x, y, w] points, resampled every 3 px ----------
+  function crPath(ctrl, sub) {
+    const n = ctrl.length, pts = [];
+    const get = i => i < 0 ? ctrl[0].map((v, k) => 2 * v - ctrl[1][k]) : i >= n ? ctrl[n - 1].map((v, k) => 2 * v - ctrl[n - 2][k]) : ctrl[i];
+    const dd = (a, b) => Math.pow(Math.hypot(b[0] - a[0], b[1] - a[1]) + 1e-4, 0.5);
+    for (let i = 0; i < n - 1; i++) {
+      const p0 = get(i - 1), p1 = get(i), p2 = get(i + 1), p3 = get(i + 2);
+      const t0 = 0, t1 = dd(p0, p1), t2 = t1 + dd(p1, p2), t3 = t2 + dd(p2, p3);
+      for (let s = 0; s < sub; s++) {
+        const t = t1 + (t2 - t1) * s / sub, q = [];
+        for (let c = 0; c < 2; c++) {
+          const A1 = (t1 - t) / (t1 - t0) * p0[c] + (t - t0) / (t1 - t0) * p1[c];
+          const A2 = (t2 - t) / (t2 - t1) * p1[c] + (t - t1) / (t2 - t1) * p2[c];
+          const A3 = (t3 - t) / (t3 - t2) * p2[c] + (t - t2) / (t3 - t2) * p3[c];
+          const B1 = (t2 - t) / (t2 - t0) * A1 + (t - t0) / (t2 - t0) * A2;
+          const B2 = (t3 - t) / (t3 - t1) * A2 + (t - t1) / (t3 - t1) * A3;
+          q.push((t2 - t) / (t2 - t1) * B1 + (t - t1) / (t2 - t1) * B2);
+        }
+        const k = s / sub; q.push(lerp(p1[2], p2[2], k * k * (3 - 2 * k)));
+        pts.push(q);
+      }
+    }
+    pts.push(ctrl[n - 1].slice());
+    const cum = [0];
+    for (let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+    const len = cum[cum.length - 1], m = Math.max(2, Math.ceil(len / 3) + 1);
+    const X = new Float32Array(m), Y = new Float32Array(m), W = new Float32Array(m);
+    let j = 0;
+    for (let i = 0; i < m; i++) {
+      const s = len * i / (m - 1);
+      while (j < cum.length - 2 && cum[j + 1] < s) j++;
+      const k = (s - cum[j]) / Math.max(1e-6, cum[j + 1] - cum[j]);
+      X[i] = lerp(pts[j][0], pts[j + 1][0], k); Y[i] = lerp(pts[j][1], pts[j + 1][1], k); W[i] = lerp(pts[j][2], pts[j + 1][2], k);
+    }
+    return { X, Y, W, n: m, len };
+  }
+
+  // ---------- the drawing: strokes, dots, words, all in world px on one long scroll ----------
+  const STROKES = [], DOTS = [], WORDS = [], BLASTS = [];
+  // a stroke draws from t0 over dur; the pen tip carries a wet bead while it draws
+  function stroke(ctrl, t0, dur, ease, opt) {
+    const P = crPath(ctrl.map(q => [q[0], q[1], q[2] * 1.6]), 12);
+    STROKES.push(Object.assign({ P, t0, dur, ease: ease || 'sine.inOut', id: STROKES.length, fade: null }, opt || {}));
+  }
+  function word(text, x, y, size, t0, opt) {
+    WORDS.push(Object.assign({ text, x, y, size, t0, italic: false, weight: 500, out: null, col: INK }, opt || {}));
+  }
+  const X0 = 0, X1 = 2400, X2 = 4800, X3 = 7200, X4 = 9600, X5 = 12000;
+
+  // 1. title: a Himalayan ridge
+  stroke([[-1000, 900, 1.5], [-820, 840, 6], [-660, 700, 10], [-570, 745, 7], [-430, 600, 11], [-310, 655, 8], [-170, 545, 13],
+          [-60, 600, 9], [60, 505, 14], [190, 585, 10], [310, 650, 8], [430, 600, 10], [570, 700, 7], [720, 655, 6],
+          [870, 780, 4], [1010, 850, 1.2]], 0.4, 3.0);
+  stroke([[-760, 930, 1], [-560, 900, 3.5], [-300, 905, 4], [-60, 880, 3], [200, 895, 3.5], [460, 870, 2.5], [700, 890, 1]], 2.6, 1.6, 'power2.inOut');
+  word('Major Somnath Sharma', -820, 330, 132, 2.9, { weight: 600 });
+  word('1923 – 1947', -812, 420, 54, 3.9, { italic: true, col: SOFT });
+
+  // 2. one life line rising through three ticks
+  const TK = [[X1 - 520, 600], [X1 - 80, 520], [X1 + 420, 400]];
+  stroke([[X1 - 820, 735, 1.5], [X1 - 700, 728, 6], [TK[0][0] - 20, 724, 8], [TK[0][0], TK[0][1] + 40, 6], [TK[0][0] + 8, TK[0][1], 4],
+          [TK[0][0] + 16, 716, 7], [X1 - 300, 706, 8], [TK[1][0] - 20, 700, 8], [TK[1][0], TK[1][1] + 50, 6], [TK[1][0] + 8, TK[1][1], 4],
+          [TK[1][0] + 16, 694, 7], [X1 + 160, 684, 8], [TK[2][0] - 20, 676, 9], [TK[2][0], TK[2][1] + 60, 7], [TK[2][0] + 9, TK[2][1], 4],
+          [TK[2][0] + 18, 672, 7], [X1 + 640, 664, 6], [X1 + 800, 658, 1.2]], 10.9, 4.8);
+  const tickT = [11.9, 13.3, 14.9];
+  [['1923', 'born'], ['1933', 'a cadet at ten'], ['1942', 'an officer at nineteen']].forEach(([y, c], i) => {
+    word(y, TK[i][0] - 6, TK[i][1] - 74, 60, tickT[i], { weight: 600 });
+    word(c, TK[i][0] - 4, TK[i][1] - 26, 40, tickT[i] + 0.4, { italic: true, col: SOFT });
+  });
+  word('He only wanted the army.', X1 - 820, 250, 84, 16.2, { italic: true });
+
+  // 3. Burma: grass, a trail carried back to camp, the tent
+  [[X2 - 380, 9], [X2 + 120, 12], [X2 + 560, 10]].forEach(([cx, n], g) => {
+    for (let k = 0; k < n; k++) {
+      const x = cx + (k - n / 2) * 26 + (hash(g * 50 + k * 3 + 1) - 0.5) * 18, h = 160 + hash(g * 50 + k * 5 + 2) * 230 * (1 - Math.abs(k - n / 2) / n);
+      const lean = (hash(g * 50 + k * 7 + 3) - 0.5) * 120;
+      stroke([[x, 800, 6 + hash(k) * 3], [x + lean * 0.3, 800 - h * 0.5, 5], [x + lean, 800 - h, 0.8]], 22.8 + g * 0.6 + hash(g * 50 + k * 11 + 4) * 0.9, 0.5, 'power2.out');
+    }
+  });
+  const trail = [[X2 + 800, 905, 1.2], [X2 + 560, 890, 4], [X2 + 300, 930, 5], [X2 + 40, 895, 5], [X2 - 220, 935, 5],
+                 [X2 - 420, 905, 4.5], [X2 - 560, 915, 3.5], [X2 - 640, 912, 1.5]];
+  stroke(trail, 24.6, 4.0, 'sine.inOut');
+  stroke([[X2 - 840, 930, 2], [X2 - 740, 720, 8], [X2 - 640, 930, 7], [X2 - 860, 932, 3], [X2 - 610, 928, 1]], 28.4, 1.0, 'power2.inOut');
+  stroke([[X2 - 740, 722, 2], [X2 - 738, 630, 3], [X2 - 676, 648, 2.5], [X2 - 736, 668, 1]], 29.2, 0.5, 'power2.out');
+  word('Burma. World War II.', X2 - 760, 250, 84, 25.2, { weight: 600 });
+  word('He carried Bahadur back to camp.', X2 - 756, 330, 50, 27.0, { italic: true, col: SOFT });
+
+  // 4. Kashmir, October 1947: a ring of mountains, the river, Srinagar, raiders from the west
+  const KC = [X3 + 120, 610], ring = [];
+  for (let k = 0; k <= 46; k++) {
+    const a = -2.3 + k / 46 * Math.PI * 2 * 0.94, jag = k % 2 ? 46 + hash(k) * 30 : 0;
+    const w = k === 0 || k === 46 ? 1.2 : 5 + 5 * vn(k * 0.3, 3);
+    ring.push([KC[0] + Math.cos(a) * (600 + jag), KC[1] + Math.sin(a) * (300 + jag * 0.6), w]);
+  }
+  stroke(ring, 34.8, 4.0);
+  stroke([[KC[0] + 640, 760, 1], [KC[0] + 420, 700, 4], [KC[0] + 200, 690, 5], [KC[0] + 30, 640, 5], [KC[0] - 180, 655, 4],
+          [KC[0] - 380, 600, 4], [KC[0] - 600, 560, 1.2]], 38.6, 1.6, 'power2.inOut');
+  DOTS.push({ x: KC[0] + 40, y: 600, r: 18, t0: 40.0, kind: 'city' });
+  word('Srinagar', KC[0] + 70, 590, 46, 40.3, { italic: true });
+  word('October 1947.', X3 - 780, 170, 84, 36.0, { weight: 600 });
+  word('Raiders march on Srinagar.', X3 - 776, 245, 50, 37.4, { italic: true, col: SOFT });
+  for (let k = 0; k < 12; k++) {
+    const y = KC[1] - 230 + k * 42 + (hash(k * 9) - 0.5) * 20, x0 = X3 - 880 - hash(k * 4) * 80, x1 = KC[0] - 300 + hash(k * 6) * 120;
+    const ty = lerp(y, 600, 0.5), t0 = 40.6 + k * 0.2;
+    stroke([[x0, y, 1], [lerp(x0, x1, 0.5), lerp(y, ty, 0.5), 4], [x1, ty, 3]], t0, 0.9, 'power2.inOut');
+    const dx = x1 - x0, dy = ty - y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+    stroke([[x1 - ux * 34 - uy * 18, ty - uy * 34 + ux * 18, 1], [x1, ty, 4], [x1 - ux * 34 + uy * 18, ty - uy * 34 - ux * 18, 1]], t0 + 0.85, 0.25, 'power2.out');
+  }
+  word('His arm in plaster, he went.', X3 - 776, 1000, 56, 44.0, { italic: true });
+
+  // 5. Badgam, 3 November 1947
+  const BC = [X4 - 300, 610];                                    // the company's position
+  stroke([[X4 + 420, 330, 1.5], [X4 + 900, 330, 5], [X4 + 900, 400, 4], [X4 + 410, 400, 5], [X4 + 412, 334, 2]], 49.6, 1.6, 'power2.inOut');
+  stroke([[X4 + 470, 365, 1], [X4 + 860, 365, 2.5]], 51.0, 0.6, 'power2.out');
+  word('Srinagar airfield', X4 + 420, 300, 40, 51.2, { italic: true, col: SOFT });
+  for (let k = 0; k < 6; k++) {
+    const hx = BC[0] + 200 + (k % 3) * 64, hy = BC[1] + 20 + Math.floor(k / 3) * 56;
+    stroke([[hx, hy + 30, 1], [hx, hy, 3], [hx + 22, hy - 16, 3], [hx + 44, hy, 3], [hx + 44, hy + 30, 1]], 51.4 + k * 0.12, 0.45, 'power2.out');
+  }
+  word('Badgam', BC[0] + 204, BC[1] + 140, 40, 52.4, { italic: true, col: SOFT });
+  word('Badgam. 3 November 1947.', X4 - 820, 170, 84, 49.4, { weight: 600 });
+  // our 70: big dots in a tight ring, set down by hand
+  const OURS = [];
+  for (let k = 0; k < 70; k++) {
+    const a = k * 2.39996, r = 16 + 92 * Math.sqrt((k + 0.5) / 70);
+    OURS.push({ x: BC[0] + Math.cos(a) * r * 1.25, y: BC[1] + Math.sin(a) * r * 0.9, r: 6.5 + hash(k) * 2, t0: 53.0 + k * 0.022, kind: 'ours',
+      lost: k % 7 === 3 || k % 11 === 5 || k === 0 });
+  }
+  OURS.forEach(d => DOTS.push(d));
+  word('70 men.', X4 + 420, 620, 72, 54.4, { italic: true, out: 65.2 });
+  // their 1,000: specks come in from the west, north and south; never from the airfield side
+  const THEM = [];
+  for (let k = 0; k < 1000; k++) {
+    const a = Math.PI * (0.42 + 1.16 * hash(k * 13 + 7)), rEnd = 170 + 250 * Math.pow(hash(k * 17 + 2), 0.7), rStart = rEnd + 650 + hash(k * 19) * 500;
+    THEM.push({ a, rEnd, rStart, r: 2.2 + hash(k * 23) * 2.2, t0: 56.0 + hash(k * 29) * 2.2, kind: 'them' });
+  }
+  word('About 1,000 raiders.', X4 + 420, 705, 72, 58.6, { italic: true, out: 65.2 });
+  word('“I shall not withdraw an inch.”', X4 + 420, 830, 60, 61.4, { italic: true, out: 65.2 });
+  BLASTS.push({ x: BC[0] + 30, y: BC[1] - 10, t0: 66.0 });
+  word('He fell. He was 24.', X4 + 420, 660, 80, 67.6, { weight: 600 });
+  word('The airfield held.', X4 + 420, 780, 64, 76.8, { italic: true });
+  word('Srinagar was saved.', X4 + 420, 860, 64, 78.2, { italic: true });
+  for (let k = 0; k < 3; k++) {                                   // reinforcements from the airfield
+    const y0 = 380 + k * 14, x0 = X4 + 400, x1 = BC[0] + 180, y1 = BC[1] - 120 + k * 46;
+    stroke([[x0, y0, 1], [lerp(x0, x1, 0.5), lerp(y0, y1, 0.5) - 30, 4], [x1, y1, 3]], 74.6 + k * 0.3, 1.1, 'power2.inOut');
+    const dx = x1 - lerp(x0, x1, 0.5), dy = y1 - (lerp(y0, y1, 0.5) - 30), L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+    stroke([[x1 - ux * 30 - uy * 16, y1 - uy * 30 + ux * 16, 1], [x1, y1, 4], [x1 - ux * 30 + uy * 16, y1 - uy * 30 - ux * 16, 1]], 75.6 + k * 0.3, 0.25, 'power2.out');
+  }
+
+  // 6. the enso, the medal, the seal
+  const E = [X5, 520], RE = 300, ens = [];
+  for (let k = 0; k <= 60; k++) {
+    const a = 2.45 + k / 60 * Math.PI * 2 * 0.93, u = k / 60;
+    ens.push([E[0] + Math.cos(a) * RE * (1 + 0.02 * Math.sin(u * 9)), E[1] + Math.sin(a) * RE, u < 0.08 ? lerp(14, 34, u / 0.08) : lerp(34, 4, Math.pow(u, 1.25))]);
+  }
+  stroke(ens, 82.9, 1.9, 'power2.inOut', { dryTail: true });
+  word('Param Vir Chakra', E[0] - 196, E[1] + 16, 68, 85.0, { weight: 600 });
+  word('the first', E[0] - 70, E[1] + 76, 46, 85.9, { italic: true, col: SOFT });
+  word('Major Somnath Sharma · 4 Kumaon · 1923–1947', E[0] - 380, E[1] + 440, 40, 86.6, { italic: true, col: SOFT });
+  const SEAL_AT = [E[0] + 300, E[1] + 250], SEAL_T = 87.2;
+
+  // ---------- the camera: one scene per stop, slow drift while holding, power2.inOut pans between ----------
+  const STOPS = [[0, X0 - 40, 0.98], [9.0, X0 + 30, 1.03], [10.4, X1, 1.0], [21.0, X1 + 60, 1.04], [22.4, X2, 1.0], [33.0, X2 + 60, 1.03],
+                 [34.4, X3, 1.0], [47.0, X3 + 50, 1.03], [48.4, X4, 1.0], [65.6, X4 + 40, 1.03], [66.4, X4 + 30, 1.06],
+                 [73.6, X4 + 30, 1.08], [75.0, X4 + 40, 1.0], [81.0, X4 + 70, 1.02], [82.4, X5, 1.0], [90, X5 + 30, 1.05]];
+  function camera(t) {
+    const cx = track(t, STOPS.map((s, i) => [s[0], s[1], i && (STOPS[i][0] - STOPS[i - 1][0] < 2) ? (i === 10 ? 'expo.out' : 'power2.inOut') : 'sine.inOut']));
+    let sc = track(t, STOPS.map((s, i) => [s[0], s[2], i && (STOPS[i][0] - STOPS[i - 1][0] < 2) ? (i === 10 ? 'expo.out' : 'power2.inOut') : 'sine.inOut']));
+    const cy = 540;
+    const bump = t > SEAL_T ? 0.008 * Math.exp(-(t - SEAL_T) * 7) * Math.cos((t - SEAL_T) * 26) : 0;
+    const shake = t > 66 && t < 67.2 ? 7 * Math.exp(-(t - 66) * 5) * Math.sin((t - 66) * 70) : 0;
+    sc *= 1 + bump;
+    return { cx: cx + 5 * Math.sin(t * 0.37) + shake, cy: cy + 4 * Math.sin(t * 0.29 + 1.1), sc, rot: 0.003 * Math.sin(t * 0.45 + 0.4) };
+  }
+  const camM = c => { const cs = Math.cos(c.rot) * c.sc, sn = Math.sin(c.rot) * c.sc; return [cs, sn, -sn, cs, 960 - (cs * c.cx - sn * c.cy), 540 - (sn * c.cx + cs * c.cy)]; };
+
+  // ---------- paper: a seamless 1024 tile locked to the camera ----------
+  const T = 1024, paper = document.createElement('canvas'); paper.width = paper.height = T;
+  (function () {
+    const p = paper.getContext('2d'), rnd = STUDIO.rng(20261109);
+    p.fillStyle = PAPER; p.fillRect(0, 0, T, T);
+    const m = 128, mc = document.createElement('canvas'); mc.width = mc.height = m;
+    const mx = mc.getContext('2d'), id = mx.createImageData(m, m);
+    for (let y = 0; y < m; y++) for (let x = 0; x < m; x++) {
+      let n = 0, a = 1, tot = 0;
+      for (let o = 0; o < 3; o++) {
+        const P = [4, 8, 16][o], X = x * P / m, Y = y * P / m, xi = Math.floor(X), yi = Math.floor(Y), fx = X - xi, fy = Y - yi;
+        const ux = fx * fx * (3 - 2 * fx), uy = fy * fy * (3 - 2 * fy);
+        const h = (i, j) => hash(((i % P + P) % P) * 92821 + ((j % P + P) % P) * 68917 + o * 1013);
+        n += a * lerp(lerp(h(xi, yi), h(xi + 1, yi), ux), lerp(h(xi, yi + 1), h(xi + 1, yi + 1), ux), uy); tot += a; a *= 0.5;
+      }
+      const v = n / tot - 0.5, k = (y * m + x) * 4;
+      if (v < 0) { id.data[k] = 150; id.data[k + 1] = 120; id.data[k + 2] = 80; id.data[k + 3] = Math.min(255, -v * 150); }
+      else { id.data[k] = 255; id.data[k + 1] = 252; id.data[k + 2] = 244; id.data[k + 3] = Math.min(255, v * 130); }
+    }
+    mx.putImageData(id, 0, 0);
+    p.imageSmoothingEnabled = true; p.globalAlpha = 0.24; p.drawImage(mc, 0, 0, T, T); p.globalAlpha = 1;
+    for (let i = 0; i < 2600; i++) {
+      const x = rnd() * T, y = rnd() * T, L = 6 + rnd() * (rnd() < 0.1 ? 120 : 36), a = rnd() * Math.PI * 2, bend = (rnd() - 0.5) * 16;
+      p.strokeStyle = rnd() < 0.7 ? `rgba(140,112,74,${0.05 + rnd() * 0.07})` : `rgba(255,253,246,${0.25 + rnd() * 0.3})`;
+      p.lineWidth = 0.5 + rnd() * 1.1;
+      for (const ox of [-T, 0, T]) for (const oy of [-T, 0, T]) {
+        p.beginPath(); p.moveTo(x + ox, y + oy);
+        p.quadraticCurveTo(x + ox + Math.cos(a) * L / 2 - Math.sin(a) * bend, y + oy + Math.sin(a) * L / 2 + Math.cos(a) * bend, x + ox + Math.cos(a) * L, y + oy + Math.sin(a) * L);
+        p.stroke();
+      }
+    }
+  })();
+  const paperPat = ctx.createPattern(paper, 'repeat');
+  const grain = document.createElement('canvas'); grain.width = grain.height = 512;
+  (function () {
+    const g = grain.getContext('2d'), d = g.createImageData(512, 512), rnd = STUDIO.rng(77);
+    for (let i = 0; i < 512 * 512; i++) {
+      const r = rnd(), k = i * 4;
+      if (r < 0.5) { d.data[k] = 70; d.data[k + 1] = 55; d.data[k + 2] = 38; d.data[k + 3] = (0.5 - r) * 46; }
+      else { d.data[k] = 255; d.data[k + 1] = 251; d.data[k + 2] = 242; d.data[k + 3] = (r - 0.5) * 52; }
+    }
+    g.putImageData(d, 0, 0);
+  })();
+  const grainPat = ctx.createPattern(grain, 'repeat');
+
+  // ---------- seal ----------
+  const SEAL = 150, seal = document.createElement('canvas'); seal.width = seal.height = 220;
+  function buildSeal() {
+    const s = seal.getContext('2d'), rnd = STUDIO.rng(77), h = SEAL / 2;
+    s.setTransform(1, 0, 0, 1, 0, 0); s.globalAlpha = 1; s.globalCompositeOperation = 'source-over'; s.clearRect(0, 0, 220, 220);
+    s.translate(110, 110); s.fillStyle = SEAL_RED; s.beginPath();
+    [[-h, -h], [h, -h], [h, h], [-h, h]].forEach((c, i) => { const jx = (rnd() - 0.5) * 3, jy = (rnd() - 0.5) * 3; i ? s.lineTo(c[0] + jx, c[1] + jy) : s.moveTo(c[0] + jx, c[1] + jy); });
+    s.closePath(); s.fill();
+    s.globalCompositeOperation = 'destination-out'; s.strokeStyle = '#000'; s.lineWidth = 4; s.strokeRect(-h + 12, -h + 12, SEAL - 24, SEAL - 24);
+    s.fillStyle = '#000'; s.textAlign = 'center'; s.textBaseline = 'middle'; s.font = SEAL_FONT; s.fillText(SEAL_CHAR, 0, 8);
+    for (let i = 0; i < 420; i++) {
+      const x = (rnd() - 0.5) * SEAL * 1.05, y = (rnd() - 0.5) * SEAL * 1.05, r = rnd() < 0.9 ? rnd() * 1.3 : 1 + rnd() * 2.6;
+      s.globalAlpha = 0.4 + rnd() * 0.6; s.beginPath(); s.arc(x, y, r, 0, Math.PI * 2); s.fill();
+    }
+    for (let i = 0; i < 90; i++) {
+      const side = Math.floor(rnd() * 4), u = (rnd() - 0.5) * SEAL, r = 1 + rnd() * 3;
+      const x = side === 0 ? -h : side === 1 ? h : u, y = side === 2 ? -h : side === 3 ? h : u;
+      s.globalAlpha = 0.8; s.beginPath(); s.arc(x, y, r, 0, Math.PI * 2); s.fill();
+    }
+  }
+  buildSeal();
+  if (document.fonts) document.fonts.load(SEAL_FONT, SEAL_CHAR).then(buildSeal, () => {});
+
+  // ---------- drawing ----------
+  const BX = new Float32Array(20000), BY = new Float32Array(20000), BW = new Float32Array(20000), BK = new Uint8Array(20000), BD = new Float32Array(20000);
+  function drawStroke(c, st, tq, seed, sc) {
+    const p = seg(tq, st.t0, st.dur, st.ease);
+    if (p <= 0) return;
+    const P = st.P, hiF = (P.n - 1) * p, hi = Math.min(P.n - 1, Math.ceil(hiF));
+    for (let i = 0; i <= hi; i++) {
+      const u = i / (P.n - 1), taper = sstep(0, 0.04, u) * 0.85 + 0.15;
+      BX[i] = P.X[i] + (vn(i * 0.04 + seed * 13.1 + st.id * 3.7, 1) - 0.5) * 3.4;
+      BY[i] = P.Y[i] + (vn(i * 0.04 + seed * 17.7 + st.id * 5.1, 2) - 0.5) * 3.4;
+      BW[i] = P.W[i] * taper * (0.93 + 0.14 * vn(i * 0.03 + seed * 7.3, 4)) * (0.95 + 0.1 * vn(i * 0.55 + st.id, 12));
+      BD[i] = clamp(0.55 - P.W[i] / 14, 0, 0.6) + (st.dryTail ? 0.7 * sstep(0.35, 0.95, u) : 0);
+      const tone = 0.12 + 0.42 * vn(i * 0.011 + st.id * 2.3, 21) + 0.5 * BD[i] - 0.3 * clamp((BW[i] - 7) / 16, 0, 1);
+      BK[i] = clamp(Math.floor(tone * 6), 0, 5);
+    }
+    if (hi < P.n - 1 || hiF < hi) { const k = hiF - Math.floor(hiF), j = Math.floor(hiF); BX[hi] = lerp(BX[j], BX[hi], k); BY[hi] = lerp(BY[j], BY[hi], k); }
+    // the stroke, in runs of equal width and tone
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    let runW = -1, runK = -1;
+    for (let i = 0; i < hi; i++) {
+      const w = Math.max(0.6 / sc, (BW[i] + BW[i + 1]) * 0.5), kk = BK[i];
+      if (runW < 0 || Math.abs(w - runW) > 0.35 / sc || kk !== runK) {
+        if (runW >= 0) { c.lineWidth = runW; c.stroke(); }
+        c.strokeStyle = TONES[kk]; c.beginPath(); c.moveTo(BX[i], BY[i]); runW = w; runK = kk;
+      }
+      c.lineTo(BX[i + 1], BY[i + 1]);
+    }
+    if (runW >= 0) { c.lineWidth = runW; c.stroke(); }
+    // feathered fibre edges on the heavy parts
+    c.strokeStyle = INK; c.lineWidth = 0.7 / sc; c.globalAlpha = 0.45; c.beginPath();
+    for (let i = 1; i < hi; i += 2) {
+      if (BW[i] * sc < 6 || hash(i * 3 + st.id * 101) > 0.3) continue;
+      let tx = BX[i + 1] - BX[i - 1], ty = BY[i + 1] - BY[i - 1]; const L = Math.hypot(tx, ty) || 1; tx /= L; ty /= L;
+      const side = hash(i * 7 + 2) < 0.5 ? -1 : 1, nx = -ty * side, ny = tx * side, len = (1.5 + hash(i * 5 + 3) * 6) / sc;
+      const bx = BX[i] + nx * BW[i] * 0.46, by = BY[i] + ny * BW[i] * 0.46;
+      c.moveTo(bx, by); c.lineTo(bx + nx * len, by + ny * len);
+    }
+    c.stroke(); c.globalAlpha = 1;
+    // dry brush: bristle streaks cut out where the brush ran dry
+    c.globalCompositeOperation = 'destination-out'; c.strokeStyle = '#000';
+    for (let b = 0; b < 10; b++) {
+      const off = (b / 9 - 0.5) * 0.9, edge = Math.pow(Math.abs(b / 9 - 0.5) * 2, 2) * 0.3;
+      let open = false;
+      for (let i = 0; i < hi; i++) {
+        const d = BD[i], nz = vn(i * 0.016 + b * 31.7 + st.id * 3, 9) * 0.75 + vn(i * 0.09 + b * 7.1, 11) * 0.25;
+        if (!(d >= 0.04 && nz < d * 0.78 + edge * d - 0.06)) { if (open) { c.stroke(); open = false; } continue; }
+        let nx = -(BY[i + 1] - BY[i]), ny = BX[i + 1] - BX[i]; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+        if (!open) { c.lineWidth = Math.max(0.7, BW[i] * (0.05 + 0.05 * d)); c.beginPath(); c.moveTo(BX[i] + nx * off * BW[i], BY[i] + ny * off * BW[i]); open = true; }
+        c.lineTo(BX[i + 1] + nx * off * BW[i], BY[i + 1] + ny * off * BW[i]);
+      }
+      if (open) c.stroke();
+    }
+    c.globalCompositeOperation = 'source-over';
+    // the wet bead at the pen tip while it draws
+    if (p < 1) { c.fillStyle = INK; c.beginPath(); c.arc(BX[hi], BY[hi], Math.max(2.6, BW[Math.max(0, hi - 1)] * 0.66), 0, Math.PI * 2); c.fill(); }
+  }
+  function blob(c, x, y, r, a, k) {
+    c.globalAlpha = a; c.beginPath();
+    const nv = r > 20 ? 48 : 10;
+    for (let j = 0; j <= nv; j++) {
+      const th = j / nv * Math.PI * 2, rr = r * (r > 20 ? 0.8 + 0.34 * vn((j % nv) * 0.45 + k * 7.7, 8) + 0.06 * hash(k * 31 + (j % nv)) : 0.82 + 0.3 * hash(k * 31 + (j % 10)));
+      j ? c.lineTo(x + Math.cos(th) * rr, y + Math.sin(th) * rr) : c.moveTo(x + Math.cos(th) * rr, y + Math.sin(th) * rr);
+    }
+    c.closePath(); c.fill(); c.globalAlpha = 1;
+  }
+  function drawWord(c, w, tq) {
+    const n = w.text.length, dur = 0.3 + 0.045 * n, p = seg(tq, w.t0, dur, 'sine.inOut');
+    if (p <= 0) return;
+    const out = w.out ? 1 - seg(tq, w.out, 0.6, 'power2.in') : 1;
+    if (out <= 0) return;
+    c.font = `${w.italic ? 'italic ' : ''}${w.weight} ${w.size}px ${SERIF}`;
+    const W = c.measureText(w.text).width;
+    c.save(); c.beginPath(); c.rect(w.x - 20, w.y - w.size * 1.2, 40 + W * p + w.size * 0.3, w.size * 1.7); c.clip();
+    c.fillStyle = w.col; c.globalAlpha = out * (0.9 + 0.1 * sstep(w.t0, w.t0 + dur + 0.3, tq));
+    c.fillText(w.text, w.x, w.y); c.restore();
+  }
+
+  S.play(function render(t) {
+    const fr = Math.round(t * 30), seed = Math.floor(fr / 2), tq = seed / 15;   // ink on twos
+    const cam = camera(t), M = camM(cam);
+    // paper
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = PAPER; ctx.fillRect(0, 0, SW, SH);
+    paperPat.setTransform(new DOMMatrix(M)); ctx.fillStyle = paperPat; ctx.fillRect(0, 0, SW, SH);
+    // ink
+    ic.setTransform(1, 0, 0, 1, 0, 0); ic.clearRect(0, 0, SW, SH); ic.setTransform(...M);
+    const L = cam.cx - 1200 / cam.sc, R = cam.cx + 1200 / cam.sc;
+    STROKES.forEach(st => { if (st.P.X[0] < R + 1500 && st.P.X[0] > L - 1500) drawStroke(ic, st, tq, seed, cam.sc); });
+    // dots: Srinagar, our 70, their 1,000
+    ic.fillStyle = INK;
+    DOTS.forEach((d, k) => {
+      const a = seg(tq, d.t0, 0.25, 'power2.out'); if (a <= 0) return;
+      const lost = d.lost ? 1 - 0.8 * seg(tq, 66.4 + hash(k) * 0.8, 0.9, 'power2.inOut') : 1;
+      blob(ic, d.x + (vn(seed * 0.7 + k, 5) - 0.5) * 1.2, d.y, d.r * (0.85 + 0.15 * a), a * lost, k);
+    });
+    if (tq > 55.5 && tq < 79) {
+      ic.fillStyle = SOFT;
+      THEM.forEach((s, k) => {
+        const inP = seg(tq, s.t0, 3.2, 'power2.inOut'), outP = seg(tq, 74.4 + hash(k * 3) * 1.2, 2.6, 'power2.in');
+        if (inP <= 0) return;
+        const r = lerp(s.rStart, s.rEnd, inP) + outP * 900, jit = (vn(seed * 0.5 + k * 1.3, 6) - 0.5) * 6 * (1 - outP);
+        blob(ic, BC[0] + Math.cos(s.a) * r * 1.15 + jit, BC[1] - Math.sin(s.a) * r * 0.75 + jit * 0.6, s.r, 0.85 * Math.min(1, inP * 4) * (1 - outP), k + 7);
+      });
+    }
+    // the blast: one wet bloom of ink, thrown spatter, then it settles and stays
+    BLASTS.forEach(b => {
+      const p = seg(tq, b.t0, 0.9, 'expo.out'); if (p <= 0) return;
+      ic.fillStyle = INK;
+      blob(ic, b.x, b.y, 70 + 190 * p, 0.16, 998);
+      blob(ic, b.x, b.y, 40 + 120 * p, 0.92, 999);
+      for (let k = 0; k < 9; k++) blob(ic, b.x + Math.cos(k * 0.7) * 60 * p, b.y + Math.sin(k * 1.3) * 44 * p, 30 + 40 * p * hash(k), 0.7, 1000 + k);
+      for (let k = 0; k < 46; k++) {
+        const a = hash(k * 13 + 1) * Math.PI * 2, d = (130 + hash(k * 7 + 3) * 260) * p, r = (1.2 + hash(k * 5 + 9) * 6) * (k < 6 ? 1.8 : 1);
+        blob(ic, b.x + Math.cos(a) * d, b.y + Math.sin(a) * d * 0.8, r, 0.95, 1100 + k);
+      }
+    });
+    WORDS.forEach(w => { if (w.x < R + 200 && w.x > L - 1800) drawWord(ic, w, tq); });
+    // seal
+    const sp = seg(t, SEAL_T, 0.2, 'power2.in');
+    if (sp > 0) {
+      ic.save(); ic.translate(SEAL_AT[0], SEAL_AT[1]); ic.rotate(-0.035); const z = lerp(1.22, 1, sp);
+      ic.globalAlpha = Math.min(1, sp * 1.4) * 0.94; ic.drawImage(seal, -110 * z, -110 * z, 220 * z, 220 * z); ic.restore();
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(ink, 0, 0);
+    // grain over everything, locked to the paper
+    grainPat.setTransform(new DOMMatrix(M)); ctx.globalAlpha = 0.6; ctx.fillStyle = grainPat; ctx.fillRect(0, 0, SW, SH); ctx.globalAlpha = 1;
+  }, { loop: false });
+})();
+</script>
+</body>
+</html>
