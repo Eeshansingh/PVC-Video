@@ -278,5 +278,18 @@
         "attribution": "inputs-changed"
       }
     ]
-  }
+  },
+  "renders": {
+    "latest": {
+      "id": "5e5292d7-4373-43b9-85d7-2d5ddac6c61e",
+      "completedAt": 1794230146341,
+      "output": "/home/user/pvc-video/out/film-silent.mp4",
+      "status": "completed",
+      "revision": "84dda254-6fe8-44bb-ac59-e7b032130067"
+    },
+    "retainedRevisions": [
+      "84dda254-6fe8-44bb-ac59-e7b032130067"
+    ]
+  },
+  "pendingArtifactCleanup": []
 }
