@@ -12,3 +12,5 @@ ink/stills/
 voice/test/
 out/.*
 out/preview/
+voice/longform/sil_*.wav
+voice/longform/concat.txt
