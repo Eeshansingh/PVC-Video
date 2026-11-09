@@ -29,3 +29,11 @@ held → Param Vir Chakra.
 ## The video
 `out/somnath-sharma-share.mp4`: 1920 x 1080, 30 fps, 4:57.7, silent, 44 MB (H.264, CRF 24).
 The full-quality render (192 MB) is too big for GitHub; `bash build.sh high` makes it again.
+
+## The ink film (Hindi narration)
+`out/somnath-sharma-ink-hindi.mp4`: an original 90 s film, 1920 x 1080, 30 fps, H.264 + AAC, 58 MB.
+No comic art on screen: the story is drawn in sumi ink along one long scroll (`ink/index.html`), in the ink-line
+style of Claude Video 2.0. Hindi narration by Sarvam Bulbul v3, voice "Anand".
+- `voice/lines.json` holds the Hindi script; `tools/tts_sarvam.py` speaks it (Sarvam key via the network proxy or `SARVAM_API_KEY`).
+- `voice/cues.json` sets when each line starts; `tools/mix_voice.py` builds `voice/narration.wav` at -16 LUFS.
+- Rebuild: render `ink/` with HyperFrames, then mux `voice/narration.wav` onto it with ffmpeg.

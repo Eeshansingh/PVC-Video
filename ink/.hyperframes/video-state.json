@@ -402,13 +402,14 @@
   },
   "renders": {
     "latest": {
-      "id": "60e0c184-2222-460b-9b0d-ce9e8b91337e",
-      "completedAt": 1794217905455,
+      "id": "48c278e5-e395-4629-b3f3-82ec743c8737",
+      "completedAt": 1794218433354,
       "output": "/home/user/pvc-video/out/ink-silent.mp4",
       "status": "completed",
-      "revision": "81838983-1f9d-4c23-bcda-2b22755ad136"
+      "revision": "5a22b478-ae31-4f58-afe7-23a5da3e770e"
     },
     "retainedRevisions": [
+      "5a22b478-ae31-4f58-afe7-23a5da3e770e",
       "81838983-1f9d-4c23-bcda-2b22755ad136"
     ]
   },
