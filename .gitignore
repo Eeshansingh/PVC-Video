@@ -11,3 +11,4 @@ out/*-pacing.json
 ink/stills/
 voice/test/
 out/.*
+out/preview/
