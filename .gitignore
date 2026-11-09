@@ -10,3 +10,4 @@ out/*-contact.jpg
 out/*-pacing.json
 ink/stills/
 voice/test/
+out/.*
